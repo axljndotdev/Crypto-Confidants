@@ -92,7 +92,6 @@ export default function App() {
       <main>
         {currentPage === 'pricing' ? (
           <PricingPage
-            onOpenConsultation={() => handleOpenConsultation()}
             onBackHome={handleBackHome}
           />
         ) : (
