@@ -1,12 +1,12 @@
 import React from 'react';
-import { Mail, ArrowUp } from 'lucide-react';
+import { MessageCircleMore, ArrowUp } from 'lucide-react';
 
 interface StartHereSectionProps {
-  onOpenConsultation: () => void;
+  onOpenPricing: () => void;
   onBackToTop: () => void;
 }
 
-export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenConsultation, onBackToTop }) => {
+export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenPricing, onBackToTop }) => {
   return (
     <section id="start-here" className="py-20 md:py-28 bg-theme-surface border-t border-theme relative">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
@@ -23,17 +23,17 @@ export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenConsul
 
         {/* Subtitle */}
         <p className="text-base sm:text-xl text-theme-muted max-w-2xl mx-auto leading-relaxed font-normal">
-          Talk to someone who has actually been through it — not a call center, not a bot. A confidential first conversation to help you understand your options.
+          Talk to someone who has been through it. Book a confidential introductory conversation to gain perspective, clarify your situation, explore your options, and decide what next steps feel right for you.
         </p>
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <button
-            onClick={onOpenConsultation}
+            onClick={onOpenPricing}
             className="flex items-center gap-2.5 px-8 py-4 text-sm font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-md hover:brightness-105 transition-all cursor-pointer w-full sm:w-auto"
           >
-            <Mail className="w-4 h-4" />
-            <span>Email us confidentially</span>
+            <MessageCircleMore className="w-4 h-4" />
+            <span>Book a Conversation</span>
           </button>
 
           <button

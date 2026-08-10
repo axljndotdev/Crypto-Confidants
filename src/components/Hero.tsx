@@ -2,11 +2,11 @@ import React from 'react';
 import { ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface HeroProps {
-  onOpenConsultation: () => void;
+  onOpenPricing: () => void;
   onReadStory: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onOpenConsultation, onReadStory }) => {
+export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadStory }) => {
   return (
     <section className="relative pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden">
       {/* Background Ambient Glow */}
@@ -54,7 +54,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenConsultation, onReadStory }) =
             {/* CTAs matching PDF Page 1 */}
             <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <button
-                onClick={onOpenConsultation}
+                onClick={onOpenPricing}
                 className="flex items-center justify-center gap-2.5 px-6 py-3.5 text-sm font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-md hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
               >
                 <ShieldCheck className="w-4 h-4" />

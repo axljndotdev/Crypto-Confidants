@@ -7,12 +7,14 @@ interface FooterProps {
   theme: ThemeMode;
   onToggleTheme: () => void;
   onOpenConsultation: () => void;
+  onOpenPricing: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   theme,
   onToggleTheme,
-  onOpenConsultation
+  onOpenConsultation,
+  onOpenPricing
 }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -108,10 +110,10 @@ export const Footer: React.FC<FooterProps> = ({
             </a>
             <div className="pt-2">
               <button
-                onClick={onOpenConsultation}
+                onClick={onOpenPricing}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-lg shadow-xs hover:brightness-105 cursor-pointer"
               >
-                <span>Email Us Confidentially</span>
+                <span>View Pricing & Next Steps</span>
               </button>
             </div>
           </div>

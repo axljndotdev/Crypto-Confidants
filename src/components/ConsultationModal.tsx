@@ -60,9 +60,6 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
                 <Lock className="w-3.5 h-3.5" />
                 <span>Zero-Trace Confidential Referral Route</span>
               </div>
-              <h2 className="font-serif text-3xl font-bold text-theme-main">
-                Confidential Consultation Request
-              </h2>
               <p className="text-xs text-theme-muted">
                 Connect directly with independent, licensed crypto estate attorneys, CPAs, or self-custody security advisors.
               </p>

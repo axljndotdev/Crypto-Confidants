@@ -8,13 +8,15 @@ interface HeaderProps {
   onToggleTheme: () => void;
   onOpenConsultation: () => void;
   activeSection: string;
+  onOpenPricing: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   onOpenConsultation,
-  activeSection
+  activeSection,
+  onOpenPricing
 }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -33,6 +35,11 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'what-we-offer', label: 'What We Offer' },
     { id: 'comms', label: 'How We Communicate' },
   ];
+
+  const handlePricingClick = () => {
+    setMobileMenuOpen(false);
+    onOpenPricing();
+  };
 
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);
@@ -112,11 +119,11 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Primary CTA */}
           <button
-            onClick={onOpenConsultation}
+            onClick={onOpenPricing}
             className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-xs hover:brightness-105 active:scale-98 transition-all cursor-pointer"
           >
             <Shield className="w-3.5 h-3.5" />
-            <span>Consultation</span>
+            <span>Pricing & Next Steps</span>
             <ArrowUpRight className="w-3.5 h-3.5 opacity-80" />
           </button>
         </div>
@@ -163,12 +170,12 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                onOpenConsultation();
+                onOpenPricing();
               }}
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-sm"
             >
               <Shield className="w-4 h-4" />
-              <span>Start Confidential Conversation</span>
+              <span>View Pricing & Next Steps</span>
             </button>
           </div>
         </div>

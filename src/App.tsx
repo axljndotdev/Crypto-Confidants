@@ -7,6 +7,7 @@ import { WhoWeHelpSection } from './components/WhoWeHelpSection';
 import { WhatWeOfferSection } from './components/WhatWeOfferSection';
 import { HowWeCommunicateSection } from './components/HowWeCommunicateSection';
 import { StartHereSection } from './components/StartHereSection';
+import { PricingPage } from './components/PricingPage';
 import { ConsultationModal } from './components/ConsultationModal';
 import { Footer } from './components/Footer';
 
@@ -16,6 +17,7 @@ export default function App() {
   const [prefilledConsultationTopic, setPrefilledConsultationTopic] = useState('');
   const [auditScore, setAuditScore] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState('hero');
+  const [currentPage, setCurrentPage] = useState<'home' | 'pricing'>('home');
 
   // Apply data-theme attribute to <html>
   useEffect(() => {
@@ -65,47 +67,66 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenPricing = () => {
+    setCurrentPage('pricing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackHome = () => {
+    setCurrentPage('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-theme-main text-theme-main selection:bg-[#8A5A1E]/30 selection:text-theme-main transition-colors duration-300">
-      
-      {/* Top Navigation Bar */}
-      <Header
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
-        onOpenConsultation={() => handleOpenConsultation()}
-        activeSection={activeSection}
-      />
+      {currentPage !== 'pricing' && (
+        <Header
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+          onOpenConsultation={() => handleOpenConsultation()}
+          activeSection={activeSection}
+          onOpenPricing={handleOpenPricing}
+        />
+      )}
       
       <main>
-        {/* Page 1: Hero & Metrics */}
-        <Hero
-          onOpenConsultation={() => handleOpenConsultation()}
-          onReadStory={handleReadStory}
-        />
+        {currentPage === 'pricing' ? (
+          <PricingPage
+            onOpenConsultation={() => handleOpenConsultation()}
+            onBackHome={handleBackHome}
+          />
+        ) : (
+          <>
+            {/* Page 1: Hero & Metrics */}
+            <Hero
+          onOpenPricing={handleOpenPricing}
+            />
 
-        {/* Page 2: Why We Exist */}
-        <WhyWeExistSection />
+            {/* Page 2: Why We Exist */}
+            <WhyWeExistSection />
 
-        {/* Page 3: Who We Help */}
-        <WhoWeHelpSection
-          onOpenConsultation={(topic) => handleOpenConsultation(topic)}
-        />
+            {/* Page 3: Who We Help */}
+            <WhoWeHelpSection
+              onOpenConsultation={(topic) => handleOpenConsultation(topic)}
+            />
 
-        {/* Page 4: What We Offer */}
-        <WhatWeOfferSection
-          onOpenConsultation={(topic) => handleOpenConsultation(topic)}
-        />
+            {/* Page 4: What We Offer */}
+            <WhatWeOfferSection
+              onOpenConsultation={(topic) => handleOpenConsultation(topic)}
+            />
 
-        {/* Pages 5 & 6: How We Communicate */}
-        <HowWeCommunicateSection
-          onOpenConsultation={() => handleOpenConsultation()}
-        />
+            {/* Pages 5 & 6: How We Communicate */}
+            <HowWeCommunicateSection
+              onOpenConsultation={() => handleOpenConsultation()}
+            />
 
-        {/* Page 7: Start Here & Legal Disclaimer */}
-        <StartHereSection
-          onOpenConsultation={() => handleOpenConsultation()}
-          onBackToTop={handleBackToTop}
-        />
+            {/* Page 7: Start Here & Legal Disclaimer */}
+            <StartHereSection
+              onOpenPricing={handleOpenPricing}
+              onBackToTop={handleBackToTop}
+            />
+          </>
+        )}
       </main>
 
       {/* Footer */}
@@ -113,6 +134,7 @@ export default function App() {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         onOpenConsultation={() => handleOpenConsultation()}
+        onOpenPricing={handleOpenPricing}
       />
 
       {/* Consultation Intake Modal */}
