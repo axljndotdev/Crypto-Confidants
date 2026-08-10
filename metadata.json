@@ -1,0 +1,6 @@
+{
+  "name": "CryptoConfidant",
+  "description": "Global education on crypto self-custody, cold storage, financial portability, and confidential advisory consultations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
