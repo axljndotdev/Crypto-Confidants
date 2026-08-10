@@ -8,6 +8,7 @@ import { WhatWeOfferSection } from './components/WhatWeOfferSection';
 import { HowWeCommunicateSection } from './components/HowWeCommunicateSection';
 import { StartHereSection } from './components/StartHereSection';
 import { PricingPage } from './components/PricingPage';
+import { NewslettersPage } from './components/NewslettersPage';
 import { ConsultationModal } from './components/ConsultationModal';
 import { Footer } from './components/Footer';
 
@@ -17,7 +18,7 @@ export default function App() {
   const [prefilledConsultationTopic, setPrefilledConsultationTopic] = useState('');
   const [auditScore, setAuditScore] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState('hero');
-  const [currentPage, setCurrentPage] = useState<'home' | 'pricing'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'pricing' | 'newsletters'>('home');
 
   // Apply data-theme attribute to <html>
   useEffect(() => {
@@ -56,19 +57,17 @@ export default function App() {
     setIsConsultationOpen(true);
   };
 
-  const handleReadStory = () => {
-    const el = document.getElementById('why-we-exist');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   const handleBackToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenPricing = () => {
     setCurrentPage('pricing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenNewsletters = () => {
+    setCurrentPage('newsletters');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -86,6 +85,7 @@ export default function App() {
           onOpenConsultation={() => handleOpenConsultation()}
           activeSection={activeSection}
           onOpenPricing={handleOpenPricing}
+          onOpenNewsletters={handleOpenNewsletters}
         />
       )}
       
@@ -94,11 +94,17 @@ export default function App() {
           <PricingPage
             onBackHome={handleBackHome}
           />
+        ) : currentPage === 'newsletters' ? (
+          <NewslettersPage
+            onBackHome={handleBackHome}
+            onOpenPricing={handleOpenPricing}
+          />
         ) : (
           <>
             {/* Page 1: Hero & Metrics */}
             <Hero
-          onOpenPricing={handleOpenPricing}
+              onOpenPricing={handleOpenPricing}
+              onReadNewsletter={handleOpenNewsletters}
             />
 
             {/* Page 2: Why We Exist */}
@@ -134,6 +140,7 @@ export default function App() {
         onToggleTheme={handleToggleTheme}
         onOpenConsultation={() => handleOpenConsultation()}
         onOpenPricing={handleOpenPricing}
+        onOpenNewsletters={handleOpenNewsletters}
       />
 
       {/* Consultation Intake Modal */}

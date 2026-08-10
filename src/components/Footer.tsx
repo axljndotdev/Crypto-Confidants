@@ -8,13 +8,15 @@ interface FooterProps {
   onToggleTheme: () => void;
   onOpenConsultation: () => void;
   onOpenPricing: () => void;
+  onOpenNewsletters?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   theme,
   onToggleTheme,
   onOpenConsultation,
-  onOpenPricing
+  onOpenPricing,
+  onOpenNewsletters
 }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -93,6 +95,13 @@ export const Footer: React.FC<FooterProps> = ({
                   How We Communicate
                 </button>
               </li>
+              {onOpenNewsletters && (
+                <li>
+                  <button onClick={onOpenNewsletters} className="hover:text-theme-brass font-medium text-theme-brass/90 transition-colors text-left cursor-pointer">
+                    Newsletters
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 

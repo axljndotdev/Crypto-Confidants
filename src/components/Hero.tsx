@@ -3,10 +3,10 @@ import { ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface HeroProps {
   onOpenPricing: () => void;
-  onReadStory: () => void;
+  onReadNewsletter: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadStory }) => {
+export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) => {
   return (
     <section className="relative pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden">
       {/* Background Ambient Glow */}
@@ -63,7 +63,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadStory }) => {
               </button>
 
               <button
-                onClick={onReadStory}
+                onClick={onReadNewsletter}
                 className="flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-medium text-theme-main border border-theme rounded-xl bg-theme-surface hover:bg-theme-surface-hover transition-all cursor-pointer"
               >
                 <span>Read Newsletter</span>

@@ -9,6 +9,7 @@ interface HeaderProps {
   onOpenConsultation: () => void;
   activeSection: string;
   onOpenPricing: () => void;
+  onOpenNewsletters?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,7 +17,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onOpenConsultation,
   activeSection,
-  onOpenPricing
+  onOpenPricing,
+  onOpenNewsletters
 }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -99,6 +101,17 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             );
           })}
+          {onOpenNewsletters && (
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenNewsletters();
+              }}
+              className="text-xs lg:text-sm font-medium transition-all py-1 cursor-pointer text-theme-muted hover:text-theme-main"
+            >
+              Newsletters
+            </button>
+          )}
         </nav>
 
         {/* Desktop Actions & Theme Controls */}
@@ -164,6 +177,17 @@ export const Header: React.FC<HeaderProps> = ({
                 {link.label}
               </button>
             ))}
+            {onOpenNewsletters && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenNewsletters();
+                }}
+                className="text-left text-base font-medium py-2 border-b border-theme-subtle/50 text-theme-main hover:text-theme-brass transition-colors"
+              >
+                Newsletters
+              </button>
+            )}
           </nav>
 
           <div className="pt-2">
