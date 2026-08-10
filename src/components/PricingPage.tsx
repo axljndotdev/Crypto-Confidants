@@ -2,11 +2,11 @@ import React from 'react';
 import { ArrowLeft, ArrowRight, ShieldCheck, Sparkles, MessageCircle, BadgeCheck } from 'lucide-react';
 
 interface PricingPageProps {
+  onOpenConsultation: () => void;
   onBackHome: () => void;
-  onPayment?: () => void;
 }
 
-export const PricingPage: React.FC<PricingPageProps> = ({ onBackHome, onPayment }) => {
+export const PricingPage: React.FC<PricingPageProps> = ({ onOpenConsultation, onBackHome }) => {
   const tiers = [
     {
       name: 'Introductory conversation',
@@ -96,10 +96,10 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onBackHome, onPayment 
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4">
           <button
-            onClick={onPayment}
+            onClick={onOpenConsultation}
             className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-md hover:brightness-105 transition-all cursor-pointer"
           >
-            <ShieldCheck className="w-4 h-4" />
+                            <ShieldCheck className="w-4 h-4" />
             <span>Agree and Continue with payment</span>
             <ArrowRight className="w-4 h-4" />
           </button>
