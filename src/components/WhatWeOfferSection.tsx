@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, MessageSquare, ExternalLink, Users, ArrowRight } from 'lucide-react';
+import { BookOpen, MessageSquare, ExternalLink, Users } from 'lucide-react';
 
 interface WhatWeOfferProps {
   onOpenConsultation: (topic?: string) => void;
@@ -77,15 +77,6 @@ export const WhatWeOfferSection: React.FC<WhatWeOfferProps> = ({ onOpenConsultat
                   </p>
                 </div>
 
-                <div className="pt-2 md:pt-0 flex-shrink-0">
-                  <button
-                    onClick={() => onOpenConsultation(item.title)}
-                    className="flex items-center gap-2 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-theme-brass border border-theme hover:border-theme-brass rounded-xl bg-theme-surface transition-all cursor-pointer"
-                  >
-                    <span>Inquire</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
               </div>
             );
           })}

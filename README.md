@@ -1,4 +1,4 @@
-# Crypto Confidants
+# Crypto Confidant
 
 Sovereign marketing & educational platform offering global education on crypto self-custody, cold storage, financial portability, and confidential consultation referral paths.
 

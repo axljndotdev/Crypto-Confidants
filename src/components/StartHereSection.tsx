@@ -23,7 +23,7 @@ export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenConsul
 
         {/* Subtitle */}
         <p className="text-base sm:text-xl text-theme-muted max-w-2xl mx-auto leading-relaxed font-normal">
-          Talk to someone who has actually been through it — not a call center, not a bot. A confidential first conversation to help you understand your options, no obligation.
+          Talk to someone who has actually been through it — not a call center, not a bot. A confidential first conversation to help you understand your options.
         </p>
 
         {/* Actions */}
@@ -48,7 +48,7 @@ export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenConsul
         {/* Legal Disclaimer Box */}
         <div className="p-6 rounded-2xl bg-theme-main border border-theme max-w-3xl mx-auto text-xs text-theme-muted leading-relaxed text-center space-y-2 mt-12">
           <p>
-            Crypto Confidants provides general education and a confidential space to think through your situation. We are not a law firm, financial adviser, or custodian, and nothing here constitutes legal or financial advice. For anything requiring licensed advice, we refer you to independent qualified professionals in your jurisdiction.
+            Crypto Confidant provides general education and a confidential space to think through your situation. We are not a law firm, financial adviser, or custodian, and nothing here constitutes legal or financial advice. For anything requiring licensed advice, we refer you to independent qualified professionals in your jurisdiction.
           </p>
         </div>
 

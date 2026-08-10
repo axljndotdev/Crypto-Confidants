@@ -149,7 +149,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = ({ onOpe
               "It's very easy for a government to bend the law against someone who holds the wrong opinion, or whose ex-partner has friends in the right places. The only real protection is not being reachable when it happens."
             </blockquote>
             <p className="text-xs font-mono font-medium text-theme-brass uppercase tracking-wider">
-              — Founder, Crypto Confidants
+              — Founder, Crypto Confidant
             </p>
           </div>
 

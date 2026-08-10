@@ -75,8 +75,7 @@ export default function App() {
         onOpenConsultation={() => handleOpenConsultation()}
         activeSection={activeSection}
       />
-
-      {/* Main Content Sections from attached PDF */}
+      
       <main>
         {/* Page 1: Hero & Metrics */}
         <Hero

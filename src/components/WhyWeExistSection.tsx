@@ -29,7 +29,7 @@ export const WhyWeExistSection: React.FC = () => {
             </p>
 
             <p>
-              So the property was sold, the cars went, and what remained moved into crypto and left the jurisdiction entirely. That experience — plus a professional background supporting people through crisis — is what shaped Crypto Confidants: practical education on what's actually available in the crypto space, offering a confidential presence for people trying to think clearly under pressure.
+              So the property was sold, the cars went, and what remained moved into crypto and left the jurisdiction entirely. That experience — plus a professional background supporting people through crisis — is what shaped Crypto Confidant: practical education on what's actually available in the crypto space, offering a confidential presence for people trying to think clearly under pressure.
             </p>
           </div>
 
@@ -56,10 +56,10 @@ export const WhyWeExistSection: React.FC = () => {
                   <div className="text-[11px] text-theme-muted leading-tight">At legal risk</div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-theme-surface border border-theme-brass/40 bg-theme-surface-hover text-center space-y-1">
-                  <Wallet className="w-5 h-5 text-theme-brass mx-auto mb-1" />
-                  <div className="font-serif font-bold text-sm text-theme-brass">Cold wallet</div>
-                  <div className="text-[11px] font-semibold text-theme-brass leading-tight">Untouchable</div>
+                <div className="p-3 rounded-xl bg-theme-surface border border-theme text-center space-y-1">
+                  <Wallet className="w-5 h-5 text-theme-main mx-auto mb-1" />
+                  <div className="font-serif font-bold text-sm text-theme-main">Cold wallet</div>
+                  <div className="text-[11px] text-theme-muted leading-tight">Untouchable</div>
                 </div>
               </div>
 

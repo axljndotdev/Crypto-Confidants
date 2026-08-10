@@ -112,3 +112,19 @@
   background: var(--brass);
 }
 
+@keyframes floatGlow {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1);
+  }
+  25% {
+    transform: translate(-50%, -50%) translate3d(3%, -4%, 0) scale(1.04);
+  }
+  50% {
+    transform: translate(-50%, -50%) translate3d(-4%, 4%, 0) scale(1.08);
+  }
+  75% {
+    transform: translate(-50%, -50%) translate3d(4%, 2%, 0) scale(1.02);
+  }
+}
+

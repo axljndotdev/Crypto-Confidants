@@ -66,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="flex flex-col">
             <span className="font-serif text-2xl font-normal tracking-tight text-theme-main group-hover:text-theme-brass transition-colors underline decoration-theme-brass/40 underline-offset-4 decoration-1">
-              Crypto Confidants
+              Crypto Confidant
             </span>
           </div>
         </a>

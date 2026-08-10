@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Compass, Globe2, ArrowUpRight } from 'lucide-react';
+import { ShieldAlert, Compass, Globe2 } from 'lucide-react';
 
 interface WhoWeHelpProps {
   onOpenConsultation: (topic?: string) => void;
@@ -64,15 +64,6 @@ export const WhoWeHelpSection: React.FC<WhoWeHelpProps> = ({ onOpenConsultation 
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-theme-subtle">
-                  <button
-                    onClick={() => onOpenConsultation(p.title)}
-                    className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-theme-brass hover:underline group-hover:translate-x-1 transition-transform cursor-pointer"
-                  >
-                    <span>Talk Through Your Situation</span>
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
             );
           })}

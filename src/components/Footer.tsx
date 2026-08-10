@@ -38,7 +38,7 @@ export const Footer: React.FC<FooterProps> = ({
               <BrandMark size={36} variant="brass" />
               <div className="flex flex-col">
                 <span className="font-serif text-2xl font-normal tracking-tight text-theme-main underline decoration-theme-brass/40 underline-offset-4 decoration-1">
-                  Crypto Confidants
+                  Crypto Confidant
                 </span>
                 <span className="text-[10px] tracking-widest uppercase text-theme-muted font-medium mt-0.5">
                   Global Education & Confidential Ear
@@ -51,7 +51,7 @@ export const Footer: React.FC<FooterProps> = ({
             </p>
 
             <p className="text-xs text-theme-muted max-w-sm leading-relaxed">
-              Crypto Confidants provides general education and a confidential space to think through your situation.
+              Crypto Confidant provides general education and a confidential space to think through your situation.
             </p>
 
             <div className="flex items-center gap-3 pt-2">
@@ -121,7 +121,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Copyright & Disclaimer */}
         <div className="pt-6 border-t border-theme-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-theme-muted">
           <div>
-            © 2026 Crypto Confidants. Educational content and confidential conversations only — not legal, tax, or financial advice.
+            © 2026 Crypto Confidant. Educational content and confidential conversations only — not legal, tax, or financial advice.
           </div>
 
           <button
