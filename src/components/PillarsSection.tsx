@@ -63,8 +63,11 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ onSelectPillar }
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-theme bg-theme-main text-xs font-mono font-medium text-theme-brass uppercase tracking-widest">
-            Core Foundations
+          <div className="flex items-center justify-center gap-3">
+            <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+            <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
+              CORE FOUNDATIONS
+            </span>
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-theme-main tracking-tight">
             The Four Pillars of Sovereign Wealth

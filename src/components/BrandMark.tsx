@@ -7,18 +7,28 @@ interface BrandMarkProps {
 }
 
 export const BrandMark: React.FC<BrandMarkProps> = ({
-  size = 40,
+  size = 32,
   variant = 'brass',
   className = ''
 }) => {
-  const gradientId = `brass-grad-${Math.random().toString(36).substr(2, 9)}`;
+  const gradientId = `brass-grad-${Math.random().toString(36).substring(2, 9)}`;
+
+  const strokeColor =
+    variant === 'brass' || variant === 'brass-bg'
+      ? `url(#${gradientId})`
+      : 'currentColor';
+
+  const strokeColorSolid =
+    variant === 'brass'
+      ? 'var(--color-brass, #C99A52)'
+      : 'currentColor';
 
   return (
-    <div className={`inline-flex items-center justify-center relative select-none ${className}`} style={{ width: size, height: size }}>
+    <div className={`inline-flex items-center justify-center relative select-none shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg
         width={size}
         height={size}
-        viewBox="0 0 100 100"
+        viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full transition-transform duration-300 hover:scale-105"
@@ -31,75 +41,34 @@ export const BrandMark: React.FC<BrandMarkProps> = ({
           </linearGradient>
         </defs>
 
-        {/* Outer Shield Outline */}
+        {/* Shield Outline */}
         <path
-          d="M50 8L88 22V48C88 71.5 71.8 90.8 50 96C28.2 90.8 12 71.5 12 48V22L50 8Z"
-          fill={
-            variant === 'brass-bg'
-              ? `url(#${gradientId})`
-              : variant === 'brass'
-              ? 'rgba(201, 154, 82, 0.08)'
-              : 'currentColor'
-          }
-          stroke={
-            variant === 'brass' || variant === 'brass-bg'
-              ? `url(#${gradientId})`
-              : 'currentColor'
-          }
-          strokeWidth="3.5"
+          d="M16 2 4 7v9c0 8 5 13.5 12 14 7-.5 12-6 12-14V7L16 2Z"
+          fill={variant === 'brass-bg' ? strokeColorSolid : 'rgba(201, 154, 82, 0.08)'}
+          stroke={strokeColor}
+          strokeWidth="1.8"
           strokeLinejoin="round"
         />
 
-        {/* Inner Shield Inset Line */}
-        <path
-          d="M50 16L80 27.5V48C80 66.8 67 82.5 50 87.2C33 82.5 20 66.8 20 48V27.5L50 16Z"
-          fill="none"
-          stroke={
-            variant === 'brass-bg'
-              ? '#0D0C0A'
-              : variant === 'brass'
-              ? `url(#${gradientId})`
-              : 'currentColor'
-          }
-          strokeWidth="1.5"
-          strokeDasharray="3 3"
-          opacity="0.75"
-        />
-
-        {/* Keyhole Head */}
+        {/* Keyhole Circle */}
         <circle
-          cx="50"
-          cy="42"
-          r="9"
-          fill={
-            variant === 'brass-bg'
-              ? '#0D0C0A'
-              : variant === 'brass'
-              ? `url(#${gradientId})`
-              : 'currentColor'
-          }
+          cx="16"
+          cy="14"
+          r="3"
+          fill={variant === 'brass-bg' ? '#0D0C0A' : 'none'}
+          stroke={variant === 'brass-bg' ? '#0D0C0A' : strokeColor}
+          strokeWidth="1.8"
         />
 
-        {/* Keyhole Body */}
+        {/* Keyhole Stem */}
         <path
-          d="M44 48L42 66C42 67.1 42.9 68 44 68H56C57.1 68 58 67.1 58 66L56 48H44Z"
-          fill={
-            variant === 'brass-bg'
-              ? '#0D0C0A'
-              : variant === 'brass'
-              ? `url(#${gradientId})`
-              : 'currentColor'
-          }
-        />
-
-        {/* Central Key Accent Star Dot */}
-        <circle
-          cx="50"
-          cy="42"
-          r="2.5"
-          fill={variant === 'brass-bg' ? `url(#${gradientId})` : 'var(--bg-main)'}
+          d="M16 16.5V21"
+          stroke={variant === 'brass-bg' ? '#0D0C0A' : strokeColor}
+          strokeWidth="2.2"
+          strokeLinecap="round"
         />
       </svg>
     </div>
   );
 };
+

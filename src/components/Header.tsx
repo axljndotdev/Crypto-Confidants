@@ -10,6 +10,7 @@ interface HeaderProps {
   activeSection: string;
   onOpenPricing: () => void;
   onOpenNewsletters?: () => void;
+  onBackHome?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,7 +19,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenConsultation,
   activeSection,
   onOpenPricing,
-  onOpenNewsletters
+  onOpenNewsletters,
+  onBackHome
 }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -36,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'who-we-help', label: 'Who We Help' },
     { id: 'what-we-offer', label: 'What We Offer' },
     { id: 'comms', label: 'How We Communicate' },
+    { id: 'start-here', label: 'Contact' },
   ];
 
   const handlePricingClick = () => {
@@ -45,18 +48,27 @@ export const Header: React.FC<HeaderProps> = ({
 
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    if (onBackHome) {
+      onBackHome();
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 50);
+    } else {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-theme-surface/95 backdrop-blur-md border-b border-theme py-3.5 shadow-md'
-          : 'bg-theme-main/80 backdrop-blur-xs py-5 border-b border-theme-subtle'
+      data-theme={theme}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 text-theme-main bg-theme-main border-b border-theme ${
+        scrolled ? 'py-3.5 shadow-md' : 'py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -64,20 +76,19 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Brand Logo & Wordmark */}
         <a
           href="#"
-          className="flex items-center gap-3 group focus:outline-none"
+          className="flex items-center gap-2.5 group focus:outline-none"
           onClick={(e) => {
             e.preventDefault();
+            if (onBackHome) onBackHome();
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
-          <div className="p-1 rounded-xl bg-theme-surface border border-theme group-hover:border-theme-brass/60 transition-colors">
-            <BrandMark size={32} variant="brass" />
+          <div className="text-theme-brass flex items-center justify-center">
+            <BrandMark size={28} variant="brass" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-serif text-2xl font-normal tracking-tight text-theme-main group-hover:text-theme-brass transition-colors underline decoration-theme-brass/40 underline-offset-4 decoration-1">
-              Crypto Confidant
-            </span>
-          </div>
+          <span className="font-serif text-2xl sm:text-3xl font-normal tracking-tight text-theme-main underline decoration-theme-brass/60 underline-offset-4 decoration-1 group-hover:text-theme-brass transition-colors">
+            Crypto Confidant
+          </span>
         </a>
 
         {/* Desktop Navigation Links */}
@@ -88,16 +99,13 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 key={link.id}
                 onClick={() => scrollToSection(link.id)}
-                className={`text-xs lg:text-sm font-medium transition-all relative py-1 cursor-pointer ${
+                className={`text-sm font-medium transition-colors py-1 cursor-pointer ${
                   isActive
                     ? 'text-theme-brass font-semibold'
-                    : 'text-theme-muted hover:text-theme-main'
+                    : 'text-theme-main/80 hover:text-theme-main'
                 }`}
               >
                 {link.label}
-                {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] brass-gradient rounded-full" />
-                )}
               </button>
             );
           })}
@@ -107,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
                 setMobileMenuOpen(false);
                 onOpenNewsletters();
               }}
-              className="text-xs lg:text-sm font-medium transition-all py-1 cursor-pointer text-theme-muted hover:text-theme-main"
+              className="text-sm font-medium transition-colors py-1 cursor-pointer text-theme-main/80 hover:text-theme-main"
             >
               Newsletters
             </button>
@@ -119,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Theme Toggle Button */}
           <button
             onClick={onToggleTheme}
-            className="p-2 text-theme-muted hover:text-theme-main border border-theme rounded-xl transition-all bg-theme-surface hover:bg-theme-surface-hover cursor-pointer"
+            className="w-10 h-10 flex items-center justify-center text-theme-main hover:text-theme-brass border border-theme-brass/40 rounded-full transition-all bg-theme-surface/60 hover:bg-theme-surface cursor-pointer shrink-0"
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Theme`}
             aria-label="Toggle Theme"
           >
@@ -130,14 +138,12 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Primary CTA */}
+          {/* Primary CTA Button */}
           <button
             onClick={onOpenPricing}
-            className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-xs hover:brightness-105 active:scale-98 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-full border border-theme-brass/50 bg-theme-surface/70 hover:bg-theme-surface text-theme-main hover:border-theme-brass shadow-2xs hover:shadow-xs transition-all cursor-pointer whitespace-nowrap"
           >
-            <Shield className="w-3.5 h-3.5" />
-            <span>Pricing & Next Steps</span>
-            <ArrowUpRight className="w-3.5 h-3.5 opacity-80" />
+            <span>Book a Conversation</span>
           </button>
         </div>
 
@@ -145,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2 sm:hidden">
           <button
             onClick={onToggleTheme}
-            className="p-2 text-theme-muted border border-theme rounded-xl bg-theme-surface"
+            className="p-2 text-theme-muted border border-theme rounded-full bg-theme-surface"
             aria-label="Toggle Theme"
           >
             {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
@@ -153,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-theme-main border border-theme rounded-xl bg-theme-surface"
+            className="p-2 text-theme-main border border-theme rounded-full bg-theme-surface"
             aria-label="Open Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -196,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
                 setMobileMenuOpen(false);
                 onOpenPricing();
               }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-sm"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-full shadow-sm"
             >
               <Shield className="w-4 h-4" />
               <span>View Pricing & Next Steps</span>

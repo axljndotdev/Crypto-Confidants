@@ -24,8 +24,11 @@ export const EducationalHub: React.FC = () => {
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-theme bg-theme-surface text-xs font-mono font-medium text-theme-brass uppercase tracking-widest">
-            Education Repository
+          <div className="flex items-center justify-center gap-3">
+            <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+            <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
+              EDUCATION REPOSITORY
+            </span>
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-theme-main tracking-tight">
             Independent Sovereign Knowledge

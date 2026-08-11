@@ -86,6 +86,7 @@ export default function App() {
           activeSection={activeSection}
           onOpenPricing={handleOpenPricing}
           onOpenNewsletters={handleOpenNewsletters}
+          onBackHome={currentPage !== 'home' ? handleBackHome : undefined}
         />
       )}
       
@@ -127,6 +128,7 @@ export default function App() {
 
             {/* Page 7: Start Here & Legal Disclaimer */}
             <StartHereSection
+              onOpenConsultation={() => handleOpenConsultation()}
               onOpenPricing={handleOpenPricing}
               onBackToTop={handleBackToTop}
             />

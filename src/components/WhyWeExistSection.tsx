@@ -1,65 +1,81 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, Building, Wallet, Landmark } from 'lucide-react';
 
 export const WhyWeExistSection: React.FC = () => {
   return (
-    <section id="why-we-exist" className="py-20 md:py-28 bg-theme-surface border-y border-theme relative">
+    <section id="why-we-exist" className="py-20 md:py-28 bg-theme-main border-y border-theme relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header */}
-        <div className="space-y-3 mb-12">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-theme bg-theme-main text-xs font-mono font-medium text-theme-brass uppercase tracking-widest">
-            WHY WE EXIST
-          </div>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-theme-main tracking-tight">
-            We built this because we lived it.
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* Narrative Text Column */}
-          <div className="lg:col-span-7 space-y-6 text-theme-muted text-base sm:text-lg leading-relaxed">
-            <p>
-              A five-year legal battle. Eight serious criminal charges, defended and dismissed — all of them. Then, when that wasn't enough, three more accusations and another attempt to bring in the police, built on claims that were never verified.
-            </p>
+          {/* Narrative Text Column (Left) */}
+          <div className="lg:col-span-6 space-y-8">
+            
+            {/* Header inside left column */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+                <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
+                  WHY WE EXIST
+                </span>
+              </div>
+              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-theme-main tracking-tight leading-[1.1]">
+                We built this because we lived it.
+              </h2>
+            </div>
 
-            <p>
-              By the time it was over, the only asset that couldn't be frozen, seized, or held hostage by a change in policy was the crypto already sitting in a cold wallet. Everything else — property, vehicles, bank accounts in Australia — was at the mercy of a system that had already shown it could be turned against us.
-            </p>
+            {/* Paragraphs */}
+            <div className="space-y-6 text-theme-muted text-base sm:text-lg leading-relaxed font-normal">
+              <p>
+                A five-year legal battle. Eight serious criminal charges, defended and dismissed — all of them. Then, when that wasn't enough, three more accusations and another attempt to bring in the police, built on claims that were never verified.
+              </p>
 
-            <p>
-              So the property was sold, the cars went, and what remained moved into crypto and left the jurisdiction entirely. That experience — plus a professional background supporting people through crisis — is what shaped Crypto Confidant: practical education on what's actually available in the crypto space, offering a confidential presence for people trying to think clearly under pressure.
-            </p>
+              <p>
+                By the time it was over, the only asset that couldn't be frozen, seized, or held hostage by a change in policy was the crypto already sitting in a cold wallet. Everything else — property, vehicles, bank accounts in Australia — was at the mercy of a system that had already shown it could be turned against us.
+              </p>
+
+              <p>
+                So the property was sold, the cars went, and what remained moved into crypto and left the jurisdiction entirely. That experience — plus a professional background supporting people through crisis — is what shaped Crypto Confidant: practical education on what's actually available in the crypto space, offering a confidential presence for people trying to think clearly under pressure.
+              </p>
+            </div>
+
           </div>
 
-          {/* Quote & Asset Comparison Box */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="p-8 rounded-3xl bg-theme-main border border-theme shadow-md space-y-6">
+          {/* Quote & Asset Comparison Card (Right) */}
+          <div className="lg:col-span-6">
+            <div className="p-8 sm:p-10 md:p-12 rounded-[28px] bg-theme-surface border border-theme shadow-sm space-y-8">
               
               {/* Quote Block */}
-              <blockquote className="font-serif text-xl sm:text-2xl text-theme-main italic leading-snug">
+              <blockquote className="font-serif text-2xl sm:text-3xl md:text-[32px] text-theme-main italic leading-[1.3] tracking-tight font-normal">
                 "If we hadn't already moved what we had into a cold wallet and left the country, we could have been left with nothing — at the whims of a legal system we no longer trusted."
               </blockquote>
 
-              {/* Asset Class Vulnerability Grid */}
-              <div className="pt-6 border-t border-theme-subtle grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-theme-surface border border-theme text-center space-y-1">
-                  <Building className="w-5 h-5 text-red-500/80 mx-auto mb-1" />
-                  <div className="font-serif font-bold text-sm text-theme-main">Property</div>
-                  <div className="text-[11px] text-theme-muted leading-tight">Sold under pressure</div>
+              {/* Asset Class Vulnerability 3-Column Comparison */}
+              <div className="pt-8 border-t border-theme-subtle grid grid-cols-3 gap-4 sm:gap-6">
+                <div className="space-y-1">
+                  <div className="font-serif text-xl sm:text-2xl text-theme-brass font-normal">
+                    Property
+                  </div>
+                  <div className="text-xs sm:text-sm text-theme-muted leading-tight">
+                    Sold under pressure
+                  </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-theme-surface border border-theme text-center space-y-1">
-                  <Landmark className="w-5 h-5 text-amber-500/80 mx-auto mb-1" />
-                  <div className="font-serif font-bold text-sm text-theme-main">Cash & assets</div>
-                  <div className="text-[11px] text-theme-muted leading-tight">At legal risk</div>
+                <div className="space-y-1">
+                  <div className="font-serif text-xl sm:text-2xl text-theme-brass font-normal">
+                    Cash & assets
+                  </div>
+                  <div className="text-xs sm:text-sm text-theme-muted leading-tight">
+                    At legal risk
+                  </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-theme-surface border border-theme text-center space-y-1">
-                  <Wallet className="w-5 h-5 text-theme-main mx-auto mb-1" />
-                  <div className="font-serif font-bold text-sm text-theme-main">Cold wallet</div>
-                  <div className="text-[11px] text-theme-muted leading-tight">Untouchable</div>
+                <div className="space-y-1">
+                  <div className="font-serif text-xl sm:text-2xl text-theme-brass font-normal">
+                    Cold wallet
+                  </div>
+                  <div className="text-xs sm:text-sm text-theme-muted leading-tight">
+                    Untouchable
+                  </div>
                 </div>
               </div>
 
@@ -72,3 +88,4 @@ export const WhyWeExistSection: React.FC = () => {
     </section>
   );
 };
+

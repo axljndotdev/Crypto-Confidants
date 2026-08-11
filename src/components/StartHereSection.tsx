@@ -1,58 +1,66 @@
 import React from 'react';
-import { MessageCircleMore, ArrowUp } from 'lucide-react';
 
 interface StartHereSectionProps {
-  onOpenPricing: () => void;
+  onOpenConsultation?: () => void;
+  onOpenPricing?: () => void;
   onBackToTop: () => void;
 }
 
-export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenPricing, onBackToTop }) => {
+export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenConsultation, onOpenPricing, onBackToTop }) => {
+  const handleEmailClick = () => {
+    if (onOpenConsultation) {
+      onOpenConsultation();
+    } else if (onOpenPricing) {
+      onOpenPricing();
+    }
+  };
+
   return (
-    <section id="start-here" className="py-20 md:py-28 bg-theme-surface border-t border-theme relative">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+    <section id="start-here" className="pt-8 sm:pt-12 pb-20 md:pb-28 bg-theme-main transition-colors duration-300 relative">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
         
         {/* Eyebrow */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-theme bg-theme-main text-xs font-mono font-medium text-theme-brass uppercase tracking-widest">
-          START HERE
+        <div className="flex items-center justify-center gap-3">
+          <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+          <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
+            START HERE
+          </span>
         </div>
 
-        {/* Headline */}
-        <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-theme-main tracking-tight">
+        {/* Title */}
+        <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-theme-main tracking-tight leading-[1.12]">
           Don't wait for the knock on the door.
         </h2>
 
         {/* Subtitle */}
-        <p className="text-base sm:text-xl text-theme-muted max-w-2xl mx-auto leading-relaxed font-normal">
-          Talk to someone who has been through it. Book a confidential introductory conversation to gain perspective, clarify your situation, explore your options, and decide what next steps feel right for you.
+        <p className="text-lg sm:text-xl text-theme-muted max-w-2xl mx-auto leading-relaxed font-normal">
+          Talk to someone who has actually been through it — not a call center, not a bot. A confidential first conversation to help you understand your options.
         </p>
 
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
           <button
             onClick={onOpenPricing}
-            className="flex items-center gap-2.5 px-8 py-4 text-sm font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-md hover:brightness-105 transition-all cursor-pointer w-full sm:w-auto"
+            className="px-7 py-3.5 text-sm sm:text-base font-semibold bg-[#8C5A1E] dark:bg-[#C89B4C] text-white dark:text-[#181611] rounded-full hover:opacity-90 transition-opacity cursor-pointer w-full sm:w-auto"
           >
-            <MessageCircleMore className="w-4 h-4" />
-            <span>Book a Conversation</span>
+            Book a conversation
           </button>
 
           <button
             onClick={onBackToTop}
-            className="flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium text-theme-main border border-theme rounded-xl bg-theme-main hover:bg-theme-surface transition-all cursor-pointer w-full sm:w-auto"
+            className="px-7 py-3.5 text-sm sm:text-base font-medium text-theme-main border border-theme bg-transparent hover:bg-theme-surface rounded-full transition-colors cursor-pointer w-full sm:w-auto"
           >
-            <span>Back to top</span>
-            <ArrowUp className="w-4 h-4 text-theme-brass" />
+            Back to top
           </button>
         </div>
 
-        {/* Legal Disclaimer Box */}
-        <div className="p-6 rounded-2xl bg-theme-main border border-theme max-w-3xl mx-auto text-xs text-theme-muted leading-relaxed text-center space-y-2 mt-12">
-          <p>
-            Crypto Confidant provides general education and a confidential space to think through your situation. We are not a law firm, financial adviser, or custodian, and nothing here constitutes legal or financial advice. For anything requiring licensed advice, we refer you to independent qualified professionals in your jurisdiction.
-          </p>
-        </div>
+        {/* Disclaimer Text */}
+        <p className="text-xs sm:text-sm text-theme-muted/80 max-w-2xl mx-auto leading-relaxed font-normal pt-6">
+          Crypto Confidant provides general education and a confidential space to think through your situation. We are not a law firm, financial adviser, or custodian, and nothing here constitutes legal or financial advice. For anything requiring licensed advice, we refer you to independent qualified professionals in your jurisdiction.
+        </p>
 
       </div>
     </section>
   );
 };
+

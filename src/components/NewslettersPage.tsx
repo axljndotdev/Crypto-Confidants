@@ -72,7 +72,7 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
           {onOpenPricing && (
             <button
               onClick={onOpenPricing}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-lg shadow-xs hover:brightness-105 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-full shadow-xs hover:brightness-105 transition-all cursor-pointer"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Get Confidential Guidance</span>

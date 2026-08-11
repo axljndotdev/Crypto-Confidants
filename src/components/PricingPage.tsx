@@ -45,9 +45,9 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onOpenConsultation, on
         </div>
 
         <div className="max-w-3xl space-y-5">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-theme bg-theme-surface shadow-xs">
-            <Sparkles className="w-4 h-4 text-theme-brass" />
-            <span className="text-xs font-mono font-medium uppercase tracking-widest text-theme-brass">
+          <div className="flex items-center gap-3">
+            <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+            <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
               PRICING
             </span>
           </div>
@@ -97,9 +97,9 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onOpenConsultation, on
         <div className="mt-10 flex flex-col sm:flex-row gap-4">
           <button
             onClick={onOpenConsultation}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-xl shadow-md hover:brightness-105 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-full shadow-md hover:brightness-105 transition-all cursor-pointer"
           >
-                            <ShieldCheck className="w-4 h-4" />
+            <ShieldCheck className="w-4 h-4" />
             <span>Agree and Continue with payment</span>
             <ArrowRight className="w-4 h-4" />
           </button>
