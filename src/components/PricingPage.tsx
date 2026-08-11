@@ -37,10 +37,10 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onOpenConsultation, on
         <div className="mb-8 flex justify-start">
           <button
             onClick={onBackHome}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-theme-main border border-theme rounded-xl bg-theme-surface hover:bg-theme-surface-hover transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs font-mono font-medium uppercase tracking-wider text-theme-muted hover:text-theme-brass transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4 text-theme-brass" />
-            <span>Back to landing page</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Home</span>
           </button>
         </div>
 
