@@ -1,173 +1,1287 @@
 @import "tailwindcss";
 
+/* ==============================================================
+   RESPONSIVE BREAKPOINTS
+
+   0–639px     = Mobile
+   640–767px   = Large Mobile / Small Tablet
+   768–1023px  = Tablet
+   1024px+     = Desktop
+   ============================================================== */
+
+
+/* ==============================================================
+   BASE
+   ============================================================== */
+
 @layer base {
+
   :root,
   [data-theme="light"] {
-    --font-serif: 'Instrument Serif', Georgia, serif;
-    --font-sans: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-    /* Light Theme */
-    --bg-main1:#faf8f2;
-    --bg-main: #F5F2EA;
-    --bg-main2:#ece6d6;
+    --font-serif:
+      "Instrument Serif",
+      Georgia,
+      serif;
+
+    --font-sans:
+      "Switzer",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+
+    /* ==========================================================
+       LIGHT THEME
+       ========================================================== */
+
+    --bg-main1: #faf8f2;
+    --bg-main: #f5f2ea;
+    --bg-main2: #ece6d6;
+
     --bg-surface: #ece6d6;
-    --bg-surface-hover: #F2ECE0;
-    --bg-icon:#e8dcc1;
-    --bg-card:#faf8f2;
-    --text-main: #1C1912;
-    --text-muted: #6B6252;
-    --brass: #8A5A1E;
-    --brass-light: #B27B36;
-    --border-main: #CFC4A7;
+    --bg-surface-hover: #f2ece0;
+
+    --bg-icon: #e8dcc1;
+    --bg-card: #faf8f2;
+
+    --text-main: #1c1912;
+    --text-muted: #6b6252;
+
+    --brass: #8a5a1e;
+    --brass-light: #b27b36;
+
+    --border-main: #cfc4a7;
     --border-subtle: rgba(207, 196, 167, 0.4);
+
     --brass-glow: rgba(138, 90, 30, 0.15);
-    --card-gradient: linear-gradient(145deg, #FAF8F2 0%, #F5F2EA 100%);
+
+    --card-gradient:
+      linear-gradient(
+        145deg,
+        #faf8f2 0%,
+        #f5f2ea 100%
+      );
   }
+
 
   [data-theme="dark"] {
-    /* Sophisticated Dark Theme */
-    --bg-main1:#131210;
+
+    /* ========================================================
+       DARK THEME
+       ======================================================== */
+
+    --bg-main1: #131210;
     --bg-main: #0d0d0d;
-    --bg-main2:#1d1b17;
+    --bg-main2: #1d1b17;
+
     --bg-surface: #1d1b17;
     --bg-surface-hover: #1a1a1a;
-    --bg-icon:#e8dcc1;
-    --bg-card:#131210;
+
+    --bg-icon: #e8dcc1;
+    --bg-card: #131210;
+
     --text-main: #e5e5e5;
     --text-muted: #8e8e8e;
+
     --brass: #c4ac76;
     --brass-light: #e5d3a5;
+
     --border-main: rgba(255, 255, 255, 0.1);
     --border-subtle: rgba(196, 172, 118, 0.2);
+
     --brass-glow: rgba(196, 172, 118, 0.15);
-    --card-gradient: linear-gradient(145deg, #1a1a1a 0%, #121212 100%);
+
+    --card-gradient:
+      linear-gradient(
+        145deg,
+        #1a1a1a 0%,
+        #121212 100%
+      );
   }
+
+
+  /* ==========================================================
+     GLOBAL RESET
+     ========================================================== */
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+
+  html {
+    width: 100%;
+    max-width: 100%;
+
+    margin: 0;
+    padding: 0;
+
+    overflow-x: hidden;
+
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    scroll-behavior: smooth;
+  }
+
 
   body {
-    background-color: var(--bg-main);
+    width: 100%;
+    min-width: 320px;
+    max-width: 100vw;
+    min-height: 100vh;
+
+    margin: 0;
+    padding: 0;
+
+    background: var(--bg-main);
     color: var(--text-main);
+
     font-family: var(--font-sans);
-    transition: background-color 0.3s ease, color 0.3s ease;
+
+    font-size: 16px;
+    line-height: 1.5;
+
+    overflow-x: hidden;
+
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 
-  h1, h2, h3, .font-serif-display {
+
+  /* ==========================================================
+     RESPONSIVE TYPOGRAPHY
+     ========================================================== */
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-serif-display {
+
+    margin: 0;
+
     font-family: var(--font-serif);
+
+    font-weight: 400;
+
+    line-height: 0.98;
+
+    letter-spacing: -0.025em;
+
+    overflow-wrap: break-word;
+  }
+
+
+  h1 {
+    font-size:
+      clamp(
+        2.5rem,
+        10vw,
+        5.5rem
+      );
+  }
+
+
+  h2 {
+    font-size:
+      clamp(
+        2rem,
+        7vw,
+        4rem
+      );
+  }
+
+
+  h3 {
+    font-size:
+      clamp(
+        1.5rem,
+        5vw,
+        2.5rem
+      );
+  }
+
+
+  p {
+    margin: 0;
+    max-width: 65ch;
+  }
+
+
+  img,
+  video,
+  canvas,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+
+  button {
+    cursor: pointer;
+  }
+
+
+  /* ==========================================================
+     TOUCH TARGETS
+     ========================================================== */
+
+  button,
+  [role="button"],
+  .button,
+  .btn {
+    min-height: 44px;
   }
 }
+
+
+/* ==============================================================
+   PAGE WRAPPER
+   ============================================================== */
+
+.page {
+  width: 100%;
+
+  min-height: 100vh;
+
+  overflow-x: hidden;
+}
+
+
+/* ==============================================================
+   MOBILE CONTAINER
+   ============================================================== */
+
+.container-mobile {
+  width: 100%;
+
+  max-width: 100%;
+
+  margin-inline: auto;
+
+  padding-inline: 16px;
+}
+
+
+/* ==============================================================
+   MOBILE SECTION
+   ============================================================== */
+
+.section-mobile {
+  width: 100%;
+
+  padding-block: 56px;
+}
+
+
+/* ==============================================================
+   MOBILE CONTENT
+   ============================================================== */
+
+.content-mobile {
+  width: 100%;
+
+  max-width: 100%;
+}
+
+
+/* ==============================================================
+   RESPONSIVE GRID
+   ============================================================== */
+
+.grid-responsive {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr);
+
+  gap: 24px;
+
+  width: 100%;
+}
+
+
+/* ==============================================================
+   RESPONSIVE FLEX
+   ============================================================== */
+
+.flex-responsive {
+  display: flex;
+
+  flex-direction: column;
+
+  width: 100%;
+}
+
+
+/* ==============================================================
+   RESPONSIVE CARD
+   ============================================================== */
+
+.card-responsive {
+  width: 100%;
+
+  min-width: 0;
+
+  padding: 20px;
+
+  border:
+    1px solid
+    var(--border-subtle);
+
+  border-radius: 16px;
+
+  background: var(--bg-card);
+
+  overflow: hidden;
+}
+
+
+/* ==============================================================
+   RESPONSIVE BUTTON
+   ============================================================== */
+
+.button-responsive {
+  width: 100%;
+
+  min-height: 48px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding-inline: 20px;
+
+  border-radius: 10px;
+
+  white-space: nowrap;
+}
+
+
+/* ==============================================================
+   NAVIGATION BASE
+   ============================================================== */
+
+.nav-responsive {
+  width: 100%;
+
+  min-height: 64px;
+
+  padding-inline: 16px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 12px;
+
+  position: relative;
+}
+
+
+/* ==============================================================
+   NAVIGATION LOGO
+   ============================================================== */
+
+.nav-logo-responsive {
+  flex-shrink: 0;
+
+  min-width: 0;
+}
+
+
+/* ==============================================================
+   CUSTOM NAVIGATION CLASSES
+   ============================================================== */
+
+.nav-links-responsive {
+  display: none;
+
+  align-items: center;
+
+  gap: 24px;
+
+  flex-shrink: 0;
+}
+
+
+.nav-links-responsive > * {
+  flex-shrink: 0;
+
+  white-space: nowrap;
+}
+
+
+.nav-menu-button {
+  display: flex;
+
+  width: 44px;
+  height: 44px;
+
+  min-width: 44px;
+  min-height: 44px;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: var(--text-main);
+
+  cursor: pointer;
+}
+
+
+/* ==============================================================
+   MOBILE HERO
+   ============================================================== */
+
+.hero-responsive {
+  width: 100%;
+
+  padding-top: 72px;
+
+  padding-bottom: 64px;
+}
+
+
+.hero-content-responsive {
+  width: 100%;
+}
+
+
+.hero-title-responsive {
+  max-width: 100%;
+
+  font-size:
+    clamp(
+      2.75rem,
+      13vw,
+      5rem
+    );
+
+  line-height: 0.92;
+}
+
+
+.hero-description-responsive {
+  margin-top: 20px;
+
+  max-width: 100%;
+
+  font-size: 16px;
+
+  line-height: 1.6;
+
+  color: var(--text-muted);
+}
+
+
+.hero-actions-responsive {
+  display: flex;
+
+  flex-direction: column;
+
+  width: 100%;
+
+  gap: 12px;
+
+  margin-top: 28px;
+}
+
+
+/* ==============================================================
+   TWO COLUMN
+   ============================================================== */
+
+.two-column-responsive {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr);
+
+  gap: 32px;
+
+  width: 100%;
+}
+
+
+/* ==============================================================
+   THREE COLUMN
+   ============================================================== */
+
+.three-column-responsive {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr);
+
+  gap: 20px;
+
+  width: 100%;
+}
+
+
+/* ==============================================================
+   HORIZONTAL MOBILE SCROLL
+   ============================================================== */
+
+.horizontal-scroll-mobile {
+  display: flex;
+
+  width: 100%;
+
+  gap: 12px;
+
+  overflow-x: auto;
+
+  padding-bottom: 8px;
+
+  scroll-snap-type: x mandatory;
+
+  scrollbar-width: none;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+
+.horizontal-scroll-mobile::-webkit-scrollbar {
+  display: none;
+}
+
+
+.horizontal-scroll-mobile > * {
+  flex:
+    0 0 85%;
+
+  scroll-snap-align: start;
+}
+
+
+/* ==============================================================
+   MOBILE FORM
+   ============================================================== */
+
+.form-responsive {
+  display: flex;
+
+  flex-direction: column;
+
+  width: 100%;
+
+  gap: 16px;
+}
+
+
+.input-responsive {
+  width: 100%;
+
+  min-height: 48px;
+
+  padding-inline: 14px;
+
+  border-radius: 10px;
+
+  font-size: 16px;
+}
+
+
+/* ==============================================================
+   640px+
+   LARGE MOBILE / SMALL TABLET
+   ============================================================== */
+
+@media (min-width: 640px) {
+
+  .container-mobile {
+    max-width: 640px;
+
+    padding-inline: 24px;
+  }
+
+
+  .section-mobile {
+    padding-block: 72px;
+  }
+
+
+  .grid-responsive {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap: 24px;
+  }
+
+
+  .card-responsive {
+    padding: 24px;
+
+    border-radius: 18px;
+  }
+
+
+  .button-responsive {
+    width: auto;
+  }
+
+
+  .hero-responsive {
+    padding-top: 88px;
+
+    padding-bottom: 80px;
+  }
+
+
+  .hero-actions-responsive {
+    flex-direction: row;
+
+    width: auto;
+
+    align-items: center;
+  }
+
+
+  .hero-actions-responsive
+  .button-responsive {
+    width: auto;
+  }
+
+
+  .two-column-responsive {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap: 40px;
+
+    align-items: center;
+  }
+
+
+  .three-column-responsive {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+
+  .horizontal-scroll-mobile > * {
+    flex-basis: 45%;
+  }
+}
+
+
+/* ==============================================================
+   768px+
+   TABLET
+   ============================================================== */
+
+@media (min-width: 768px) {
+
+  .container-mobile {
+    max-width: 768px;
+
+    padding-inline: 32px;
+  }
+
+
+  .section-mobile {
+    padding-block: 88px;
+  }
+
+
+  .nav-responsive {
+    min-height: 72px;
+
+    padding-inline: 24px;
+  }
+
+
+  .hero-responsive {
+    padding-top: 110px;
+
+    padding-bottom: 100px;
+  }
+
+
+  .hero-title-responsive {
+    max-width: 760px;
+  }
+
+
+  .hero-description-responsive {
+    max-width: 600px;
+
+    font-size: 17px;
+  }
+
+
+  .three-column-responsive {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+
+  .horizontal-scroll-mobile {
+    overflow: visible;
+
+    flex-wrap: wrap;
+  }
+
+
+  .horizontal-scroll-mobile > * {
+    flex:
+      1 1 0;
+  }
+}
+
+
+/* ==============================================================
+   1024px+
+   DESKTOP
+   ============================================================== */
+
+@media (min-width: 1024px) {
+
+  .container-mobile {
+    max-width: 1020px;
+
+    padding-inline: 40px;
+  }
+
+
+  .section-mobile {
+    padding-block: 120px;
+  }
+
+
+  .nav-responsive {
+    min-height: 80px;
+
+    padding-inline: 40px;
+  }
+
+
+  .nav-links-responsive {
+    display: flex;
+
+    align-items: center;
+
+    gap: 24px;
+
+    flex-shrink: 0;
+  }
+
+
+  .nav-menu-button {
+    display: none;
+  }
+
+
+  .hero-responsive {
+    padding-top: 140px;
+
+    padding-bottom: 140px;
+  }
+
+
+  .hero-title-responsive {
+    max-width: 900px;
+  }
+
+
+  .hero-description-responsive {
+    font-size: 18px;
+  }
+
+
+  .grid-responsive {
+    gap: 32px;
+  }
+
+
+  .three-column-responsive {
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      );
+  }
+
+
+  .two-column-responsive {
+    gap: 80px;
+  }
+
+
+  .card-responsive {
+    padding: 28px;
+
+    border-radius: 20px;
+  }
+}
+
+
+/* ==============================================================
+   1280px+
+   LARGE DESKTOP
+   ============================================================== */
+
+@media (min-width: 1280px) {
+
+  .container-mobile {
+    max-width: 1240px;
+  }
+
+
+  .section-mobile {
+    padding-block: 140px;
+  }
+
+
+  .two-column-responsive {
+    gap: 120px;
+  }
+}
+
+
+/* ==============================================================
+   THEME UTILITIES
+   ============================================================== */
 
 .bg-theme-main1 {
   background-color: var(--bg-main1);
 }
 
+
 .bg-theme-main {
   background-color: var(--bg-main);
 }
+
 
 .bg-theme-main2 {
   background-color: var(--bg-main2);
 }
 
+
 .bg-theme-surface {
   background-color: var(--bg-surface);
 }
+
 
 .bg-theme-icon {
   background-color: var(--bg-icon);
 }
 
+
 .bg-theme-card {
   background-color: var(--bg-card);
 }
+
+
+.bg-theme-surface-hover\:hover {
+  background-color: var(--bg-surface-hover);
+}
+
 
 .card-gradient {
   background: var(--card-gradient);
 }
 
-.bg-theme-surface-hover:hover {
-  background-color: var(--bg-surface-hover);
-}
 
 .text-theme-main {
   color: var(--text-main);
 }
 
+
 .text-theme-muted {
   color: var(--text-muted);
 }
 
-.text-theme-brass, .text-accent {
+
+.text-theme-brass,
+.text-accent {
   color: var(--brass);
 }
+
 
 .border-theme {
   border-color: var(--border-main);
 }
 
+
 .border-theme-subtle {
   border-color: var(--border-subtle);
 }
 
+
+/* ==============================================================
+   BRASS
+   ============================================================== */
+
 .brass-gradient {
-  background: linear-gradient(135deg, #e5d3a5 0%, #c4ac76 50%, #9e8550 100%);
+  background:
+    linear-gradient(
+      135deg,
+      #e5d3a5 0%,
+      #c4ac76 50%,
+      #9e8550 100%
+    );
 }
 
+
 .brass-gradient-text {
-  background: linear-gradient(135deg, #e5d3a5 0%, #c4ac76 50%, #9e8550 100%);
+  background:
+    linear-gradient(
+      135deg,
+      #e5d3a5 0%,
+      #c4ac76 50%,
+      #9e8550 100%
+    );
+
+  background-clip: text;
+
   -webkit-background-clip: text;
+
+  color: transparent;
+
   -webkit-text-fill-color: transparent;
 }
 
+
 .brass-border-glow {
-  box-shadow: 0 0 25px var(--brass-glow);
+  box-shadow:
+    0 0 25px var(--brass-glow);
 }
 
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-main);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-main);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--brass);
-}
 
-@keyframes floatGlow {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1);
-  }
-  25% {
-    transform: translate(-50%, -50%) translate3d(3%, -4%, 0) scale(1.04);
-  }
-  50% {
-    transform: translate(-50%, -50%) translate3d(-4%, 4%, 0) scale(1.08);
-  }
-  75% {
-    transform: translate(-50%, -50%) translate3d(4%, 2%, 0) scale(1.02);
-  }
-}
+/* ==============================================================
+   EYEBROW
+   ============================================================== */
 
 .eyebrow {
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-  font-weight: 600;
   display: inline-flex;
+
   align-items: center;
-  gap: var(--space-2);
-}
-.eyebrow::before {
-  content: '';
-  width: 24px;
-  height: 1px;
-  background: var(--color-primary);
+
+  gap: 8px;
+
+  font-family: var(--font-sans);
+
+  font-size: 11px;
+
+  line-height: 1;
+
+  letter-spacing: 0.14em;
+
+  text-transform: uppercase;
+
+  font-weight: 600;
+
+  color: var(--brass);
 }
 
+
+.eyebrow::before {
+  content: "";
+
+  width: 18px;
+
+  height: 1px;
+
+  flex-shrink: 0;
+
+  background: currentColor;
+}
+
+
+/* ==============================================================
+   FLOAT GLOW
+   ============================================================== */
+
+@keyframes floatGlow {
+
+  0%,
+  100% {
+    transform:
+      translate(-50%, -50%)
+      translate3d(0, 0, 0)
+      scale(1);
+  }
+
+
+  25% {
+    transform:
+      translate(-50%, -50%)
+      translate3d(3%, -4%, 0)
+      scale(1.04);
+  }
+
+
+  50% {
+    transform:
+      translate(-50%, -50%)
+      translate3d(-4%, 4%, 0)
+      scale(1.08);
+  }
+
+
+  75% {
+    transform:
+      translate(-50%, -50%)
+      translate3d(4%, 2%, 0)
+      scale(1.02);
+  }
+}
+
+
+.float-glow {
+  animation:
+    floatGlow 12s ease-in-out infinite;
+}
+
+
+/* ==============================================================
+   REDUCED MOTION
+   ============================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.01ms !important;
+
+    scroll-behavior:
+      auto !important;
+  }
+}
+
+
+/* ==============================================================
+   DESKTOP SCROLLBAR ONLY
+   ============================================================== */
+
+@media (min-width: 768px) {
+
+  ::-webkit-scrollbar {
+    width: 8px;
+
+    height: 8px;
+  }
+
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-main);
+  }
+
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-main);
+
+    border-radius: 4px;
+  }
+
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--brass);
+  }
+}
+
+
+/* ==============================================================
+   HEADER RESPONSIVE OVERRIDE
+
+   IMPORTANT:
+   Header.tsx is intentionally left unchanged.
+
+   Header.tsx currently uses Tailwind breakpoints:
+
+   md:flex       = 768px
+   sm:hidden     = 640px
+   md:hidden     = 768px
+
+   We override those ONLY for the header so that:
+
+   0–639px       = Hamburger
+   640–767px     = Hamburger
+   768–1023px    = Hamburger
+   1024px+       = Full Navigation
+
+   This keeps your Header component intact.
+   ============================================================== */
+
+
+/* ==============================================================
+   640px–767px
+
+   Keep hamburger controls visible.
+   Keep desktop navigation hidden.
+   ============================================================== */
+
+@media (min-width: 640px) and (max-width: 767px) {
+
+  /* Header mobile controls */
+  header .sm\:hidden {
+    display: flex !important;
+  }
+
+
+  /* Header desktop navigation */
+  header nav.hidden.md\:flex {
+    display: none !important;
+  }
+
+
+  /* Mobile/tablet drawer */
+  header .md\:hidden {
+    display: block !important;
+  }
+}
+
+
+/* ==============================================================
+   768px–1023px
+
+   THIS IS THE IMPORTANT TABLET RANGE.
+
+   Tailwind normally switches to md:flex here.
+
+   We override that behavior and KEEP THE HAMBURGER.
+   ============================================================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+
+  /* ============================================================
+     HAMBURGER + MOBILE CONTROLS
+     ============================================================ */
+
+  header .sm\:hidden {
+    display: flex !important;
+  }
+
+
+  /* ============================================================
+     HIDE DESKTOP NAVIGATION
+     ============================================================ */
+
+  header nav.hidden.md\:flex {
+    display: none !important;
+  }
+
+
+  /* ============================================================
+     KEEP MOBILE/TABLET DRAWER AVAILABLE
+     ============================================================ */
+
+  header .md\:hidden {
+    display: block !important;
+  }
+}
+
+
+/* ==============================================================
+   1024px+
+   DESKTOP
+
+   NOW THE HAMBURGER IS REPLACED BY:
+
+   - Full navigation
+   - Theme control
+   - Book a Conversation button
+
+   ============================================================== */
+
+@media (min-width: 1024px) {
+
+  /* ============================================================
+     SHOW DESKTOP NAVIGATION
+     ============================================================ */
+
+  header nav.hidden.md\:flex {
+    display: flex !important;
+
+    align-items: center;
+  }
+
+
+  /* ============================================================
+     SHOW DESKTOP ACTIONS
+     ============================================================ */
+
+  header .hidden.sm\:flex {
+    display: flex !important;
+
+    align-items: center;
+  }
+
+
+  /* ============================================================
+     HIDE MOBILE/TABLET CONTROLS
+     ============================================================ */
+
+  header .sm\:hidden {
+    display: none !important;
+  }
+
+
+  /* ============================================================
+     HIDE MOBILE/TABLET DRAWER
+     ============================================================ */
+
+  header .md\:hidden {
+    display: none !important;
+  }
+}
