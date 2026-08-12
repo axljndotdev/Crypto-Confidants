@@ -313,15 +313,11 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="pt-2">
 
             <button
-              onClick={handlePricingClick}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#0D0C0A] brass-gradient rounded-full shadow-sm"
-            >
-              <Shield className="w-4 h-4" />
-
-              <span>
-                View Pricing & Next Steps
-              </span>
-            </button>
+            onClick={onOpenPricing}
+            className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-full border border-theme-brass/50 bg-theme-surface/70 hover:bg-theme-surface text-theme-main hover:border-theme-brass shadow-2xs hover:shadow-xs transition-all cursor-pointer whitespace-nowrap"
+          >
+            <span>Book a Conversation</span>
+          </button>
 
           </div>
 
