@@ -7,9 +7,13 @@
     --font-sans: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
     /* Light Theme */
+    --bg-main1:#faf8f2;
     --bg-main: #F5F2EA;
-    --bg-surface: #FAF8F2;
+    --bg-main2:#ece6d6;
+    --bg-surface: #ece6d6;
     --bg-surface-hover: #F2ECE0;
+    --bg-icon:#e8dcc1;
+    --bg-card:#faf8f2;
     --text-main: #1C1912;
     --text-muted: #6B6252;
     --brass: #8A5A1E;
@@ -22,9 +26,13 @@
 
   [data-theme="dark"] {
     /* Sophisticated Dark Theme */
+    --bg-main1:#131210;
     --bg-main: #0d0d0d;
-    --bg-surface: #121212;
+    --bg-main2:#1d1b17;
+    --bg-surface: #1d1b17;
     --bg-surface-hover: #1a1a1a;
+    --bg-icon:#e8dcc1;
+    --bg-card:#131210;
     --text-main: #e5e5e5;
     --text-muted: #8e8e8e;
     --brass: #c4ac76;
@@ -47,12 +55,28 @@
   }
 }
 
+.bg-theme-main1 {
+  background-color: var(--bg-main1);
+}
+
 .bg-theme-main {
   background-color: var(--bg-main);
 }
 
+.bg-theme-main2 {
+  background-color: var(--bg-main2);
+}
+
 .bg-theme-surface {
   background-color: var(--bg-surface);
+}
+
+.bg-theme-icon {
+  background-color: var(--bg-icon);
+}
+
+.bg-theme-card {
+  background-color: var(--bg-card);
 }
 
 .card-gradient {

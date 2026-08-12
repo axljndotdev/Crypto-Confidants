@@ -33,7 +33,7 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   return (
-    <footer className="bg-theme-main transition-colors duration-300 border-t border-theme py-16 sm:py-20 relative">
+    <footer className="bg-theme-main1 transition-colors duration-300 border-t border-theme py-16 sm:py-20 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16">
         
         {/* Main Grid */}

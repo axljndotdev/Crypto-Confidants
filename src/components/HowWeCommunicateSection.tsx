@@ -45,7 +45,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
             A confidant, not a form submission.
           </h2>
           <p className="text-base sm:text-lg text-theme-muted leading-relaxed font-normal">
-            Everything about how we operate — including how we talk to you — is built around one principle: your information should exist in as few places as possible, for as short a time as possible.
+            Everything about how we operate — including how we talk to you — is built around one principle: maintain privacy, your information should exist in as few places as possible, for as short a time as possible.
           </p>
         </div>
 
@@ -55,7 +55,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
             return (
               <div
                 key={s.num}
-                className="p-6 rounded-[22px] bg-theme-surface border border-theme space-y-4 transition-all"
+                className="p-6 rounded-[22px] bg-theme-card border border-theme space-y-4 transition-all"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-serif text-2xl text-theme-brass font-normal">
@@ -99,9 +99,25 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
                     REQUIRED FOR YOUR CALL
                   </span>
                 </div>
-                <p className="text-sm sm:text-base text-theme-muted leading-relaxed font-normal">
-                  A free, end-to-end encrypted messaging and calling app. Download it to your phone or desktop to join your confidential conversation — no account details beyond a phone number, which stays private between us.
-                </p>
+                <div className="space-y-3">
+  <p className="text-sm sm:text-base text-theme-muted leading-relaxed font-normal">
+    A free, end-to-end encrypted messaging and calling app. Download it to your phone or desktop to join your confidential conversation — no account details beyond a phone number, which stays private between us.
+  </p>
+  <div>
+    <a
+      href="https://signal.org/download/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center text-xs sm:text-sm font-medium text-theme-accent hover:underline gap-1"
+    >
+      <span>Download Signal</span>
+      {/* Optional external link icon */}
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+    </a>
+  </div>
+</div>
               </div>
             </div>
 
@@ -110,17 +126,32 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
               <div className="w-10 h-10 rounded-xl bg-[#EFE7DA] dark:bg-[#282218] flex items-center justify-center text-theme-brass shrink-0 mt-0.5">
                 <Mail className="w-5 h-5 stroke-[1.8]" />
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="font-sans text-xl font-bold text-theme-main">Proton Mail</span>
-                  <span className="px-2.5 py-0.5 text-[11px] font-sans font-semibold uppercase tracking-wider text-theme-muted bg-[#EFE7DA]/70 dark:bg-[#282218]/80 rounded-full">
-                    OPTIONAL
-                  </span>
-                </div>
-                <p className="text-sm sm:text-base text-theme-muted leading-relaxed font-normal">
-                  A free, private email provider. Not required to reach us — any email address works — but if you'd like to send fully PGP-encrypted messages from your side too, this is the easiest way.
-                </p>
-              </div>
+              <div className="space-y-3">
+  <div className="space-y-2">
+    <div className="flex items-center gap-3 flex-wrap">
+      <span className="font-sans text-xl font-bold text-theme-main">Proton Mail</span>
+      <span className="px-2.5 py-0.5 text-[11px] font-sans font-semibold uppercase tracking-wider text-[#734A17] dark:text-[#D4A359] bg-[#EFE7DA] dark:bg-[#282218] rounded-full">
+        OPTIONAL
+      </span>
+    </div>
+    <p className="text-sm sm:text-base text-theme-muted leading-relaxed font-normal">
+      A free, private email provider. Not required to reach us — any email address works — but if you'd like to send fully PGP-encrypted messages from your side too, this is the easiest way.
+    </p>
+  </div>
+  <div>
+    <a
+      href="https://proton.me/mail"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center text-xs sm:text-sm font-medium text-theme-accent hover:underline gap-1"
+    >
+      <span>Get Proton Mail</span>
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+    </a>
+  </div>
+</div>
             </div>
           </div>
 
@@ -132,7 +163,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
         </div>
 
         {/* Location / Meeting Note */}
-        <div className="p-6 sm:p-8 rounded-[18px] bg-theme-surface border border-theme border-l-4 border-l-theme-brass flex items-start sm:items-center gap-4 sm:gap-6 mb-20">
+        <div className="p-6 sm:p-8 rounded-[18px] bg-theme-main1 border border-theme border-l-4 border-l-theme-brass flex items-start sm:items-center gap-4 sm:gap-6 mb-20">
           <div className="w-10 h-10 rounded-full bg-[#EFE7DA] dark:bg-[#282218] flex items-center justify-center text-theme-brass shrink-0 mt-0.5 sm:mt-0">
             <MapPin className="w-5 h-5 stroke-[1.8]" />
           </div>
@@ -144,12 +175,12 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
       </div>
 
       {/* Standalone Founder Quote Section */}
-      <div className="py-20 md:py-28 bg-theme-surface border-t border-theme">
+      <div className="py-20 md:py-28 bg-[#1c1912] border-t border-theme">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <blockquote className="font-serif text-3xl sm:text-4xl md:text-[40px] text-theme-main font-normal leading-[1.22] tracking-tight">
+          <blockquote className="font-serif text-3xl sm:text-4xl md:text-[40px] text-[#f5f2ea] font-normal leading-[1.22] tracking-tight">
             "It's very easy for a government to bend the law against someone who holds the wrong opinion, or whose ex-partner has friends in the right places. The only real protection is not being reachable when it happens."
           </blockquote>
-          <p className="text-sm sm:text-base text-theme-muted font-normal">
+          <p className="text-sm sm:text-base text-[#f7f3e9] font-normal">
             — Founder, Crypto Confidant
           </p>
         </div>

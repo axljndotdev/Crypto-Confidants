@@ -19,7 +19,7 @@ export const WhatWeOfferSection: React.FC<WhatWeOfferProps> = () => {
     {
       num: '03',
       title: 'Referrals to independent specialists',
-      description: 'When something needs a license — legal advice, tax structuring, licensed financial guidance — we connect you with independent professionals in the relevant jurisdiction. We don\'t provide that advice ourselves.'
+      description: 'When something needs a license — legal advice, tax structuring, licensed financial guidance — if necessary we connect you with independent professionals in the relevant jurisdiction. We don\'t provide that advice ourselves.'
     },
     {
       num: '04',
@@ -29,7 +29,7 @@ export const WhatWeOfferSection: React.FC<WhatWeOfferProps> = () => {
   ];
 
   return (
-    <section id="what-we-offer" className="py-20 md:py-28 bg-theme-main transition-colors duration-300 relative border-y border-theme">
+    <section id="what-we-offer" className="py-20 md:py-28 bg-theme-main2 transition-colors duration-300 relative border-y border-theme">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">

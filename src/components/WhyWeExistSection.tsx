@@ -2,12 +2,12 @@ import React from 'react';
 
 export const WhyWeExistSection: React.FC = () => {
   return (
-    <section id="why-we-exist" className="py-20 md:py-28 bg-theme-main border-y border-theme relative">
+    <section id="why-we-exist" className="py-20 md:py-28 bg-theme-main1 border-y border-theme relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
-          {/* Narrative Text Column (Left) */}
+          {/* Narrative Text Column (Left) */} 
           <div className="lg:col-span-6 space-y-8">
             
             {/* Header inside left column */}
@@ -30,7 +30,7 @@ export const WhyWeExistSection: React.FC = () => {
               </p>
 
               <p>
-                By the time it was over, the only asset that couldn't be frozen, seized, or held hostage by a change in policy was the crypto already sitting in a cold wallet. Everything else — property, vehicles, bank accounts in Australia — was at the mercy of a system that had already shown it could be turned against us.
+                By the time it was over, the only asset that couldn't be frozen, seized, or held hostage by a sudden policy change was the crypto already sitting in a cold wallet. Everything else — property, vehicles, and traditional bank accounts — remained at the mercy of institutions that had already shown how easily they could be turned against us, even in supposedly stable, developed societies where persecution is often assumed to be a distant problem.
               </p>
 
               <p>
@@ -42,7 +42,7 @@ export const WhyWeExistSection: React.FC = () => {
 
           {/* Quote & Asset Comparison Card (Right) */}
           <div className="lg:col-span-6">
-            <div className="p-8 sm:p-10 md:p-12 rounded-[28px] bg-theme-surface border border-theme shadow-sm space-y-8">
+            <div className="p-8 sm:p-10 md:p-12 rounded-[28px] bg-theme-card border border-theme shadow-sm space-y-8">
               
               {/* Quote Block */}
               <blockquote className="font-serif text-2xl sm:text-3xl md:text-[32px] text-theme-main italic leading-[1.3] tracking-tight font-normal">

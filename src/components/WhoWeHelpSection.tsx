@@ -51,11 +51,11 @@ export const WhoWeHelpSection: React.FC<WhoWeHelpProps> = () => {
             return (
               <div
                 key={p.id}
-                className="p-8 sm:p-9 rounded-[22px] bg-theme-surface border border-theme flex flex-col justify-between space-y-6 transition-all duration-300"
+                className="p-8 sm:p-9 rounded-[22px] bg-theme-card border border-theme flex flex-col justify-between space-y-6 transition-all duration-300"
               >
                 <div className="space-y-5">
                   {/* Icon Box */}
-                  <div className="w-12 h-12 rounded-xl bg-[#EFE7DA] dark:bg-[#282218] flex items-center justify-center text-theme-brass shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-theme-icon dark:bg-[#e5d3a5] flex items-center justify-center text-theme-brass shrink-0">
                     <IconComponent className="w-5 h-5 stroke-[1.8]" />
                   </div>
 
