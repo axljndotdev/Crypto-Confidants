@@ -5,6 +5,8 @@ import {
   BadgeCheck,
   ShieldCheck,
   ArrowUpRight,
+  CalendarDays,
+  Clock3,
 } from 'lucide-react';
 
 interface PricingPageProps {
@@ -25,137 +27,218 @@ interface Tier {
   accent: boolean;
 }
 
-interface FormData {
+interface BookingData {
   name: string;
   email: string;
-  situation: string;
-  additional: string;
+  date: string;
+  time: string;
 }
 
-const INITIAL_FORM: FormData = {
+const INITIAL_BOOKING: BookingData = {
   name: '',
   email: '',
-  situation: '',
-  additional: '',
+  date: '',
+  time: '',
 };
 
 export const PricingPage: React.FC<PricingPageProps> = ({
   onBackHome,
 }) => {
   const [selectedTier, setSelectedTier] = useState<TierId | null>(null);
-  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+
+  const [bookingData, setBookingData] =
+    useState<BookingData>(INITIAL_BOOKING);
 
   const tiers: Tier[] = [
     {
       id: 'intro',
       topLabel: '20 MINUTES',
-      name: 'Introductory Consultation',
+      name: 'Introductory Session',
       price: 'US$75',
       description:
-        'A confidential introductory conversation to help clarify your situation, explore some relevant options, and help you decide what next steps feel right for you.',
+        'A focused introductory conversation to clarify your situation, explore relevant options, and determine whether further advisory work would be helpful.',
       features: [],
-      buttonLabel: 'Start private enquiry',
-      accent: false,
+      buttonLabel: 'Book & Pay',
+      accent: true,
     },
     {
       id: 'private',
       topLabel: '50 MINUTES',
-      name: 'Private Advisory Session',
+      name: 'Single Session',
       price: 'US$450',
       description:
-        'A more detailed, confidential exploration of your situation, priorities, strategy, and positioning.',
+        'A more detailed, confidential exploration of your situation, priorities, strategy, and positioning will be scheduled after the introductory session.',
       features: [],
-      buttonLabel: 'Book this conversation',
-      accent: true,
+      buttonLabel: 'Introductory Session Required First',
+      accent: false,
     },
     {
       id: 'engagement',
       topLabel: '10 × 50 MINUTES',
-      name: '10-Session Advisory Engagement',
+      name: 'Multiple Session',
       price: 'US$4,000',
       description:
-        'Typically following on from the single conversation. In-depth confidential conversations exploring your situation, priorities, strategy, positioning, and execution.',
-      features: ['Valid for 180 days from date of purchase.'],
-      buttonLabel: 'Enquire about this package',
+        'An ongoing confidential conversation covering your situation, priorities, strategy, positioning, and execution.',
+      features: [
+        'Valid for 180 days from date of purchase.',
+      ],
+      buttonLabel: 'Introductory Session Required First',
       accent: false,
     },
   ];
+
+  /*
+   * --------------------------------------------------------------
+   * ACTIVE MODAL
+   * --------------------------------------------------------------
+   */
 
   const activeTier = tiers.find(
     (tier) => tier.id === selectedTier
   );
 
-  const updateField = (
-    field: keyof FormData,
-    value: string
-  ) => {
-    setFormData((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
-
-  const openModal = (tierId: TierId) => {
-    setFormData(INITIAL_FORM);
-    setSelectedTier(tierId);
+  const openIntroModal = () => {
+    setBookingData(INITIAL_BOOKING);
+    setSelectedTier('intro');
   };
 
   const closeModal = () => {
     setSelectedTier(null);
   };
 
-  const buildEmail = () => {
-    if (!activeTier) return;
+  /*
+   * --------------------------------------------------------------
+   * BOOKING FORM
+   * --------------------------------------------------------------
+   */
 
-    const lines: string[] = [
-      `Hello,`,
-      ``,
-      `I am writing regarding the ${activeTier.name} (${activeTier.price}).`,
-      ``,
-      `Name / alias: ${formData.name}`,
-      `Email: ${formData.email}`,
-      ``,
-      `What I would like to discuss:`,
-      formData.situation,
-      ``,
-      `Additional information:`,
-      formData.additional || 'None provided.',
-      ``,
-      `I understand that this is an enquiry and that the next step will be discussed privately by email.`,
-      ``,
-      `Thank you.`,
-    ];
-
-    return lines.join('\n');
+  const updateBookingField = (
+    field: keyof BookingData,
+    value: string
+  ) => {
+    setBookingData((current) => ({
+      ...current,
+      [field]: value,
+    }));
   };
 
-  const handleSubmit = () => {
-    if (!activeTier) return;
-
-    const body = buildEmail();
-
-    if (!body) return;
-
-    const subject = `${activeTier.name} — Private Enquiry`;
-
-    const protonAddress = 'axljndev@proton.me';
-
-    const mailto = [
-      `mailto:${protonAddress}`,
-      `?subject=${encodeURIComponent(subject)}`,
-      `&body=${encodeURIComponent(body)}`,
-    ].join('');
-
-    window.location.href = mailto;
-  };
-
-  const isValid = () => {
+  const isBookingValid = () => {
     return (
-      !!formData.name.trim() &&
-      !!formData.email.trim() &&
-      !!formData.situation.trim()
+      !!bookingData.name.trim() &&
+      !!bookingData.email.trim() &&
+      !!bookingData.date &&
+      !!bookingData.time
     );
   };
+
+  /*
+   * --------------------------------------------------------------
+   * STRIPE
+   * --------------------------------------------------------------
+   *
+   * Replace this with your actual Stripe Checkout endpoint.
+   *
+   * IMPORTANT:
+   * Do not put a Stripe secret key in this React component.
+   *
+   * Your backend should:
+   *
+   * 1. Receive the booking details.
+   * 2. Create the Stripe Checkout Session.
+   * 3. Attach the booking information to the Stripe customer/session.
+   * 4. Return the Stripe Checkout URL.
+   * 5. Stripe confirms payment to your backend through webhook.
+   * 6. Booking remains PENDING until you manually confirm it.
+   *
+   * Example:
+   *
+   * POST /api/create-intro-booking
+   *
+   * --------------------------------------------------------------
+   */
+
+  const handleBookAndPay = async () => {
+    if (!isBookingValid()) return;
+
+    try {
+      /*
+       * TEMPORARY PLACEHOLDER
+       *
+       * Replace this with your real backend endpoint.
+       */
+
+      const response = await fetch(
+        '/api/create-intro-booking',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: bookingData.name.trim(),
+            email: bookingData.email.trim(),
+            date: bookingData.date,
+            time: bookingData.time,
+            service: 'Introductory Session',
+            amount: 75,
+            currency: 'USD',
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          'Unable to create booking.'
+        );
+      }
+
+      const data = await response.json();
+
+      /*
+       * Your backend should return:
+       *
+       * {
+       *   checkoutUrl: "https://checkout.stripe.com/..."
+       * }
+       */
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+
+    } catch (error) {
+      console.error(
+        'Booking/payment error:',
+        error
+      );
+
+      alert(
+        'We were unable to start the booking process. Please try again.'
+      );
+    }
+  };
+
+  /*
+   * --------------------------------------------------------------
+   * AVAILABLE TIMES
+   * --------------------------------------------------------------
+   *
+   * These are example times for now.
+   *
+   * Eventually these should come from your actual
+   * booking/calendar availability system.
+   * --------------------------------------------------------------
+   */
+
+  const availableTimes = [
+    '09:00',
+    '10:00',
+    '11:00',
+    '13:00',
+    '14:00',
+    '15:00',
+    '16:00',
+  ];
 
   return (
     <>
@@ -180,7 +263,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({
               <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
 
               <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
-                BOOKING & PRICING
+                PRIVATE ADVISORY
               </span>
             </div>
 
@@ -189,19 +272,29 @@ export const PricingPage: React.FC<PricingPageProps> = ({
             </h1>
 
             <p className="text-base sm:text-m text-theme-muted leading-relaxed max-w-none">
-              Every conversation is confidential and educational – a space to think clearly through your situation, priorities and options.
+              Every conversation is confidential and educational — a space to
+              think clearly through your situation, priorities and options.
 
               <br /><br />
 
-              Over decades, I have personally witnessed individuals and families be financially and politically devastated—losing their homes, incomes, and ability to provide for themselves. I have seen people left without the resources to defend their rights, protect those they love, or make meaningful choices about their future. And it is not getting better.
+              Over decades, I have personally witnessed individuals and
+              families be financially and politically devastated — losing their
+              homes, incomes, and ability to provide for themselves. I have
+              seen people left without the resources to defend their rights,
+              protect those they love, or make meaningful choices about their
+              future. And it is not getting better.
 
               <br /><br />
 
-              You may be legally free to leave a hostile environment, but without access to portable money and assets you can move or protect, that freedom may be an illusion. Complacency quietly erodes the options you may one day depend on.
+              You may be legally free to leave a hostile environment, but
+              without access to portable money and assets you can move or
+              protect, that freedom may be an illusion. Complacency quietly
+              erodes the options you may one day depend on.
 
               <br /><br />
 
-              If you are ready to get started, begin with a private enquiry below.
+              If you are ready to get started, choose the appropriate
+              conversation below.
             </p>
           </div>
 
@@ -227,7 +320,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
                     {tier.accent && (
                       <span className="inline-flex items-center rounded-full border border-theme-brass/30 bg-theme-brass/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-theme-brass">
-                        Most common
+                        Start Here
                       </span>
                     )}
                   </div>
@@ -246,8 +339,29 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
                 </div>
 
+                {/* =================================================
+                    ONLY $75 HAS AN ACTIVE BUTTON
+                    ================================================= */}
+
+                {tier.id === 'intro' ? (
+                  <button
+                    onClick={openIntroModal}
+                    className="w-full rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition-all border border-theme-brass/30 bg-[#8A5A1E] text-theme-main shadow-lg hover:brightness-95"
+                  >
+                    {tier.buttonLabel}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] border border-theme-brass/30 bg-transparent text-theme-brass opacity-60 cursor-not-allowed"
+                  >
+                    {tier.buttonLabel}
+                  </button>
+                )}
+
                 {tier.features.length > 0 && (
-                  <ul className="space-y-3 text-sm text-theme-muted font-bold">
+                  <ul className="space-y-3 text-sm text-theme-muted">
                     {tier.features.map((feature) => (
                       <li
                         key={feature}
@@ -260,25 +374,16 @@ export const PricingPage: React.FC<PricingPageProps> = ({
                   </ul>
                 )}
 
-                <button
-                  onClick={() => openModal(tier.id)}
-                  className={`w-full rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition-all ${
-                    tier.accent
-                      ? 'border border-theme-brass/30 bg-[#8A5A1E] text-theme-main shadow-lg hover:brightness-95'
-                      : 'border border-theme-brass/30 bg-transparent text-theme-brass hover:bg-theme-brass/10'
-                  }`}
-                >
-                  {tier.buttonLabel}
-                </button>
-
               </div>
             ))}
+
           </div>
 
           {/* Disclaimer */}
           <div className="mt-10 text-center">
             <p className="text-sm text-theme-muted max-w-3xl mx-auto">
-              Our conversations are educational and confidential. They do not constitute legal, tax, investment, or financial advice.
+              Our conversations are educational and confidential. They do not
+              constitute legal, tax, investment, or financial advice.
             </p>
           </div>
 
@@ -286,19 +391,20 @@ export const PricingPage: React.FC<PricingPageProps> = ({
       </section>
 
       {/* =========================================================
-          ENQUIRY MODAL
+          BOOK & PAY MODAL — US$75
       ========================================================= */}
-      {activeTier && (
+
+      {activeTier?.id === 'intro' && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="enquiry-modal-title"
+          aria-labelledby="introductory-session-modal-title"
         >
 
           {/* Backdrop */}
           <button
-            aria-label="Close enquiry"
+            aria-label="Close"
             onClick={closeModal}
             className="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-default"
           />
@@ -310,20 +416,22 @@ export const PricingPage: React.FC<PricingPageProps> = ({
             <div className="sticky top-0 z-10 flex items-start justify-between gap-6 border-b border-theme bg-theme-surface px-6 py-5 sm:px-8">
 
               <div>
+
                 <div className="mb-2 text-[11px] font-mono font-semibold uppercase tracking-[0.25em] text-theme-brass">
-                  {activeTier.buttonLabel}
+                  BOOK & PAY
                 </div>
 
                 <h2
-                  id="enquiry-modal-title"
+                  id="introductory-session-modal-title"
                   className="font-serif text-3xl sm:text-4xl text-theme-main leading-tight"
                 >
-                  {activeTier.name}
+                  Introductory Session
                 </h2>
 
                 <p className="mt-2 text-sm text-theme-muted">
-                  {activeTier.price}
+                  20 minutes · US$75
                 </p>
+
               </div>
 
               <button
@@ -336,99 +444,250 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
             </div>
 
-            {/* Form */}
+            {/* Content */}
             <div className="px-6 py-6 sm:px-8 sm:py-8 space-y-6">
 
-              {/* Privacy Notice */}
+              {/* Important notice */}
               <div className="flex items-start gap-3 rounded-2xl border border-theme-brass/20 bg-theme-brass/5 p-4">
+
                 <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-theme-brass" />
 
                 <p className="text-sm leading-relaxed text-theme-muted">
-                  This is a private enquiry. Your answers will be placed into an email for you to review before sending. Nothing is submitted from this form.
+                  Select a preferred time and complete payment below.
+                  <span className="font-semibold text-theme-main">
+                    {' '}Payment does not by itself confirm the appointment.
+                  </span>
+                  {' '}Your requested time will remain subject to confirmation
+                  by us.
                 </p>
+
               </div>
 
               {/* Name */}
               <div>
+
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-theme-main">
                   Name or alias
                 </label>
 
                 <input
                   type="text"
-                  value={formData.name}
+                  value={bookingData.name}
                   onChange={(e) =>
-                    updateField('name', e.target.value)
+                    updateBookingField(
+                      'name',
+                      e.target.value
+                    )
                   }
                   placeholder="Your name or preferred alias"
+                  autoComplete="name"
                   className="w-full min-h-[50px] rounded-xl border border-theme bg-theme-main px-4 text-theme-main outline-none transition focus:border-theme-brass"
                 />
+
               </div>
 
               {/* Email */}
               <div>
+
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-theme-main">
                   Email address
                 </label>
 
                 <input
                   type="email"
-                  value={formData.email}
+                  value={bookingData.email}
                   onChange={(e) =>
-                    updateField('email', e.target.value)
+                    updateBookingField(
+                      'email',
+                      e.target.value
+                    )
                   }
-                  placeholder="Where we can reply privately"
+                  placeholder="Where we can send your booking status"
+                  autoComplete="email"
                   className="w-full min-h-[50px] rounded-xl border border-theme bg-theme-main px-4 text-theme-main outline-none transition focus:border-theme-brass"
                 />
+
               </div>
 
-              {/* What would you like to discuss? */}
-              <Textarea
-                label="What would you like to discuss?"
-                value={formData.situation}
-                onChange={(value) =>
-                  updateField('situation', value)
-                }
-                placeholder="A short description is enough."
-              />
+              {/* Date */}
+              <div>
 
-              {/* Additional information */}
-              <Textarea
-                label="Anything else you'd like us to know?"
-                optional
-                value={formData.additional}
-                onChange={(value) =>
-                  updateField('additional', value)
-                }
-                placeholder="Optional"
-              />
+                <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-theme-main">
+                  <CalendarDays className="h-4 w-4 text-theme-brass" />
+                  Preferred date
+                </label>
+
+                <input
+                  type="date"
+                  value={bookingData.date}
+                  onChange={(e) =>
+                    updateBookingField(
+                      'date',
+                      e.target.value
+                    )
+                  }
+                  min={new Date()
+                    .toISOString()
+                    .split('T')[0]}
+                  className="w-full min-h-[50px] rounded-xl border border-theme bg-theme-main px-4 text-theme-main outline-none transition focus:border-theme-brass"
+                />
+
+              </div>
+
+              {/* Time */}
+              <div>
+
+                <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-theme-main">
+                  <Clock3 className="h-4 w-4 text-theme-brass" />
+                  Preferred time
+                </label>
+
+                <select
+                  value={bookingData.time}
+                  onChange={(e) =>
+                    updateBookingField(
+                      'time',
+                      e.target.value
+                    )
+                  }
+                  className="w-full min-h-[50px] rounded-xl border border-theme bg-theme-main px-4 text-theme-main outline-none transition focus:border-theme-brass"
+                >
+
+                  <option value="">
+                    Select a time
+                  </option>
+
+                  {availableTimes.map((time) => (
+                    <option
+                      key={time}
+                      value={time}
+                    >
+                      {time}
+                    </option>
+                  ))}
+
+                </select>
+
+              </div>
+
+              {/* Booking status explanation */}
+              <div className="rounded-2xl border border-theme p-5">
+
+                <div className="text-[10px] font-mono font-semibold uppercase tracking-[0.2em] text-theme-brass">
+                  How this works
+                </div>
+
+                <div className="mt-4 space-y-3">
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-theme-brass text-[10px] font-semibold text-theme-brass">
+                      1
+                    </div>
+
+                    <p className="text-sm text-theme-muted">
+                      Choose your preferred date and time.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-theme-brass text-[10px] font-semibold text-theme-brass">
+                      2
+                    </div>
+
+                    <p className="text-sm text-theme-muted">
+                      Pay the US$75 introductory session fee securely.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-theme-brass text-[10px] font-semibold text-theme-brass">
+                      3
+                    </div>
+
+                    <p className="text-sm text-theme-muted">
+                      We verify the payment and review the requested
+                      appointment.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-theme-brass text-[10px] font-semibold text-theme-brass">
+                      4
+                    </div>
+
+                    <p className="text-sm text-theme-muted">
+                      We confirm the appointment privately by email.
+                    </p>
+                  </div>
+
+                </div>
+
+              </div>
 
               {/* Action */}
-              <div className="pt-2">
+              <div className="pt-1">
 
                 <button
-                  onClick={handleSubmit}
-                  disabled={!isValid()}
+                  onClick={handleBookAndPay}
+                  disabled={!isBookingValid()}
                   className="w-full min-h-[54px] rounded-full border border-theme-brass/30 bg-[#8A5A1E] px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-theme-main shadow-lg transition-all hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
                 >
+
                   <span className="inline-flex items-center justify-center gap-2">
-                    Continue to private email
+                    Book & Pay US$75
                     <ArrowUpRight className="h-4 w-4" />
                   </span>
+
                 </button>
 
                 <p className="mt-3 text-center text-xs leading-relaxed text-theme-muted">
-                  Your email application will open with your enquiry already prepared.
-                  You can review it before sending.
+                  You will be taken to secure payment. Your appointment is
+                  considered requested until we confirm it.
                 </p>
 
               </div>
 
             </div>
+
           </div>
         </div>
       )}
     </>
+  );
+};
+
+
+/* ================================================================
+   PROCESS STEP
+================================================================ */
+
+interface ProcessStepProps {
+  number: string;
+  title: string;
+  text: string;
+}
+
+const ProcessStep: React.FC<ProcessStepProps> = ({
+  number,
+  title,
+  text,
+}) => {
+  return (
+    <div className="rounded-[24px] border border-theme bg-theme-surface p-6">
+
+      <div className="text-[11px] font-mono font-semibold uppercase tracking-[0.25em] text-theme-brass">
+        {number}
+      </div>
+
+      <div className="mt-3 text-lg font-semibold text-theme-main">
+        {title}
+      </div>
+
+      <p className="mt-2 text-sm leading-relaxed text-theme-muted">
+        {text}
+      </p>
+
+    </div>
   );
 };
 
@@ -443,6 +702,7 @@ interface TextareaProps {
   onChange: (value: string) => void;
   placeholder?: string;
   optional?: boolean;
+  maxLength?: number;
 }
 
 const Textarea: React.FC<TextareaProps> = ({
@@ -451,9 +711,11 @@ const Textarea: React.FC<TextareaProps> = ({
   onChange,
   placeholder,
   optional = false,
+  maxLength,
 }) => {
   return (
     <div>
+
       <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-theme-main">
 
         {label}
@@ -471,8 +733,16 @@ const Textarea: React.FC<TextareaProps> = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={4}
+        maxLength={maxLength}
         className="w-full resize-y rounded-xl border border-theme bg-theme-main px-4 py-3 text-theme-main outline-none transition focus:border-theme-brass"
       />
+
+      {maxLength && (
+        <div className="mt-1 text-right text-[10px] text-theme-muted">
+          {value.length}/{maxLength}
+        </div>
+      )}
+
     </div>
   );
 };
