@@ -83,6 +83,10 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
   return (
     <>
+      {/* =========================================================
+          PRICING PAGE
+      ========================================================= */}
+
       <section className="relative pt-32 pb-20 md:pt-20 md:pb-28 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -99,7 +103,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({
               <span>Return to Home</span>
             </button>
           </div>
-
 
           {/* =====================================================
               INTRO
@@ -150,7 +153,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
           </div>
 
-
           {/* =====================================================
               PRICING
           ===================================================== */}
@@ -160,94 +162,117 @@ export const PricingPage: React.FC<PricingPageProps> = ({
             {tiers.map((tier, index) => (
               <div
                 key={`${tier.name}-${index}`}
-                className={`rounded-[32px] border p-8 space-y-6 ${
+                className={`flex h-full flex-col rounded-[32px] border p-8 ${
                   tier.accent
                     ? 'bg-theme-surface border-theme-brass/40 shadow-lg'
                     : 'bg-theme-surface border-theme'
                 }`}
               >
 
-                <div className="space-y-4">
+                {/* =================================================
+                    CARD CONTENT
+                ================================================= */}
 
-                  <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-1 flex-col">
 
-                    <span className="text-[16px] font-mono font-semibold uppercase tracking-[0.3em] text-theme-brass">
-                      {tier.topLabel}
-                    </span>
+                  <div className="space-y-4">
 
-                    {tier.accent && (
-                      <span className="inline-flex items-center rounded-full border border-theme-brass/30 bg-theme-brass/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-theme-brass">
-                        Start Here
+                    {/* TOP LABEL */}
+
+                    <div className="flex min-h-[32px] flex-wrap items-center gap-3">
+
+                      <span className="text-[16px] font-mono font-semibold uppercase tracking-[0.3em] text-theme-brass">
+                        {tier.topLabel}
                       </span>
+
+                      {tier.accent && (
+                        <span className="inline-flex items-center rounded-full border border-theme-brass/30 bg-theme-brass/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-theme-brass">
+                          Start Here
+                        </span>
+                      )}
+
+                    </div>
+
+                    {/* NAME */}
+
+                    <div className="min-h-[28px] text-lg font-semibold text-theme-main">
+                      {tier.name}
+                    </div>
+
+                    {/* PRICE */}
+
+                    <div className="min-h-[72px] font-serif text-5xl md:text-6xl text-theme-brass tracking-tight">
+                      {tier.price}
+                    </div>
+
+                    {/* DESCRIPTION */}
+
+                    <div className="min-h-[128px]">
+                      <p className="text-sm text-theme-muted leading-relaxed">
+                        {tier.description}
+                      </p>
+                    </div>
+
+                  </div>
+
+                  {/* =================================================
+                      VALIDITY / FEATURES
+                  ================================================= */}
+
+                  <div className="min-h-[36px] mt-1">
+
+                    {tier.features.length > 0 && (
+                      <ul className="space-y-2 text-sm text-theme-muted">
+
+                        {tier.features.map((feature) => (
+                          <li
+                            key={feature}
+                            className="flex items-start gap-2"
+                          >
+                            <BadgeCheck className="w-4 h-4 mt-0.5 text-theme-brass flex-shrink-0" />
+
+                            <span>
+                              {feature}
+                            </span>
+                          </li>
+                        ))}
+
+                      </ul>
                     )}
 
                   </div>
 
-                  <div className="text-lg font-semibold text-theme-main">
-                    {tier.name}
-                  </div>
-
-                  <div className="font-serif text-5xl md:text-6xl text-theme-brass tracking-tight">
-                    {tier.price}
-                  </div>
-
-                  <p className="text-sm text-theme-muted leading-relaxed">
-                    {tier.description}
-                  </p>
-
                 </div>
 
-
                 {/* =================================================
-                    ONLY INTRODUCTORY SESSION IS ACTIVE
+                    BUTTON — ALWAYS ALIGNED
                 ================================================= */}
 
-                {tier.id === 'intro' ? (
-                  <button
-                    onClick={openIntroModal}
-                    className="w-full rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition-all border border-theme-brass/30 bg-[#8A5A1E] text-theme-main shadow-lg hover:brightness-95"
-                  >
-                    {tier.buttonLabel}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    disabled
-                    className="w-full rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] border border-theme-brass/30 bg-transparent text-theme-brass opacity-60 cursor-not-allowed"
-                  >
-                    {tier.buttonLabel}
-                  </button>
-                )}
+                <div className="mt-2">
 
+                  {tier.id === 'intro' ? (
+                    <button
+                      onClick={openIntroModal}
+                      className="w-full rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] transition-all border border-theme-brass/30 bg-[#8A5A1E] text-theme-main shadow-lg hover:brightness-95"
+                    >
+                      {tier.buttonLabel}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] border border-theme-brass/30 bg-transparent text-theme-brass opacity-60 cursor-not-allowed"
+                    >
+                      {tier.buttonLabel}
+                    </button>
+                  )}
 
-                {/* =================================================
-                    FEATURES
-                ================================================= */}
-
-                {tier.features.length > 0 && (
-                  <ul className="space-y-3 text-sm text-theme-muted">
-
-                    {tier.features.map((feature) => (
-                      <li
-                        key={feature}
-                        className="flex items-start gap-2"
-                      >
-                        <BadgeCheck className="w-4 h-4 mt-0.5 text-theme-brass flex-shrink-0" />
-
-                        <span>
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-
-                  </ul>
-                )}
+                </div>
 
               </div>
             ))}
 
           </div>
-
 
           {/* =====================================================
               DISCLAIMER
@@ -264,7 +289,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
         </div>
       </section>
-
 
       {/* =========================================================
           CAL.COM BOOK & PAY MODAL — US$75
@@ -288,13 +312,11 @@ export const PricingPage: React.FC<PricingPageProps> = ({
             className="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-default"
           />
 
-
           {/* =====================================================
               MODAL
           ===================================================== */}
 
           <div className="relative flex h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] sm:rounded-[28px] border border-theme bg-theme-surface shadow-2xl">
-
 
             {/* ===================================================
                 HEADER
@@ -321,8 +343,10 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
               </div>
 
+              {/* =================================================
+                  CLOSE
+              ================================================= */}
 
-              {/* Close */}
               <button
                 onClick={closeModal}
                 aria-label="Close"
@@ -333,7 +357,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
             </div>
 
-
             {/* ===================================================
                 SCROLLABLE CONTENT
             =================================================== */}
@@ -342,7 +365,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
               <div className="px-3 py-3 sm:px-5 sm:py-5">
 
-
                 {/* =================================================
                     CAL.COM BOOKING
                 ================================================= */}
@@ -350,7 +372,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({
                 <div className="overflow-hidden rounded-2xl border border-theme bg-theme-main">
 
                   <Cal
-                    calLink="axl-jn-ocyewx/introductory-session"
+                    calLink="crypto-confidant/introductory-session"
                     style={{
                       width: '100%',
                       height: '700px',
@@ -358,12 +380,11 @@ export const PricingPage: React.FC<PricingPageProps> = ({
                     }}
                     config={{
                       layout: 'month_view',
-                      theme: 'auto',
+                      theme: 'dark',
                     }}
                   />
 
                 </div>
-
 
                 {/* =================================================
                     IMPORTANT NOTICE — BOTTOM
@@ -396,7 +417,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({
                   </div>
 
                 </div>
-
 
                 {/* =================================================
                     BOTTOM SPACING
