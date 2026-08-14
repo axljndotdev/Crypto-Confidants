@@ -31,6 +31,15 @@ export const PricingPage: React.FC<PricingPageProps> = ({
   const [selectedTier, setSelectedTier] =
     useState<TierId | null>(null);
 
+  /*
+   * Used to force a fresh Cal.com embed whenever the
+   * introductory session modal is opened.
+   *
+   * This prevents React from reusing a previously mounted
+   * Cal.com iframe/embed instance.
+   */
+  const [calInstanceKey, setCalInstanceKey] = useState(0);
+
   const tiers: Tier[] = [
     {
       id: 'intro',
@@ -73,7 +82,12 @@ export const PricingPage: React.FC<PricingPageProps> = ({
     (tier) => tier.id === selectedTier
   );
 
+  /*
+   * Open the introductory modal and force Cal.com
+   * to create a fresh instance.
+   */
   const openIntroModal = () => {
+    setCalInstanceKey((current) => current + 1);
     setSelectedTier('intro');
   };
 
@@ -371,6 +385,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({
                 <div className="overflow-hidden rounded-2xl border border-theme bg-theme-main">
 
                   <Cal
+                    key={calInstanceKey}
                     calLink="crypto-confidant/introductory-session"
                     style={{
                       width: '100%',
