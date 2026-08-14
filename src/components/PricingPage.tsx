@@ -147,8 +147,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({
               <br />
               <br />
 
-              If you are ready to get started, choose the appropriate
-              conversation below.
+              If you are ready to get started, choose the introductory session below.
             </p>
 
           </div>
