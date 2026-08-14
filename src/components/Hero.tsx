@@ -56,7 +56,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
               onClick={onOpenPricing}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm sm:text-base font-semibold rounded-full bg-[#A6732E] hover:bg-[#C28938] text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
             >
-              <span>Start a confidential conversation</span>
+              <span>Start a conversation</span>
             </button>
 
             <button

@@ -390,5 +390,162 @@ export const NEWSLETTERS: Newsletter[] = [
       { name: 'U.S. Department of the Treasury / OFAC', details: 'Sanctions Compliance Guidance for the Virtual Currency Industry' },
       { name: 'Bank for International Settlements (BIS)', details: 'Cryptoassets and Decentralised Finance' }
     ]
+  },
+  {
+    id: 'newsletter-08',
+    issueNumber: 'Newsletter 08',
+    date: 'August 6, 2026',
+    title: '$116M Coldcard Wallet Hack Exposes Hidden Hardware Wallet Risk',
+    category: 'Hardware Security',
+    readTime: '6 min read',
+
+    introParagraphs: [
+      'The scale and sophistication of the estimated $116 million Coldcard wallet theft have led some observers to speculate that the incident may have involved an insider. Factors fueling this theory include the vulnerability reportedly remaining undiscovered for years, the attackers’ apparent ability to identify potentially affected wallets, and the coordinated nature of the thefts.',
+
+      'However, there is currently no evidence supporting an inside job. Public reporting has linked the incident to an alleged vulnerability in older Coldcard firmware rather than malicious actions by Coinkite employees. Coinkite has disputed aspects of these claims, and the full circumstances remain under investigation. No forensic findings, blockchain analysis, law enforcement statements, or official investigations have identified insider involvement. At present, the inside-job theory remains speculation rather than an evidence-based conclusion.'
+    ],
+
+    summaryTable: {
+      how: 'If an incident were an inside job, it could involve an employee or trusted contractor abusing privileged access to introduce a vulnerability, leak confidential information, or help external attackers exploit a weakness. Investigators would look for evidence such as unauthorized code changes, suspicious system access, or coordination with the attackers.',
+
+      when: 'Signs of an inside job could emerge during or after a forensic investigation. Investigators may analyze source code, audit logs, employee activities, communications, and blockchain transactions to determine whether anyone inside the organization played a role.',
+
+      where: 'Evidence would most likely be found within the company’s internal environment, including source code repositories, firmware development systems, access logs, internal communications, employee devices, and financial records. Blockchain analysis may also reveal connections between stolen funds and potential insiders.',
+
+      why: 'An insider might be motivated by financial gain, coercion, revenge against the company, or collaboration with external cybercriminals. However, motive alone is not evidence. Investigators must establish a clear link between the insider’s actions and the attack through verifiable forensic evidence before concluding that an incident was an inside job.'
+    },
+
+    protectionSteps: [
+      {
+        sectionTitle: 'Could the Coldcard Exploit Be an Inside Job?',
+        description: 'Possible indicators investigators would look for before concluding that an insider was involved.',
+
+        items: [
+          {
+            step: '1',
+            title: 'Exclusive internal knowledge',
+            action: 'Determine whether the attackers used information that should only have been available to company employees, such as unpublished firmware details or internal security documentation.'
+          },
+          {
+            step: '2',
+            title: 'Intentional code changes',
+            action: 'Look for evidence that the vulnerability was deliberately introduced into the firmware rather than being an accidental programming mistake.'
+          },
+          {
+            step: '3',
+            title: 'Suspicious employee access',
+            action: 'Review whether an employee accessed sensitive systems, source code, or security infrastructure without a legitimate business reason.'
+          },
+          {
+            step: '4',
+            title: 'Attempts to hide the vulnerability',
+            action: 'Examine internal records for evidence that someone knowingly ignored, concealed, or prevented the bug from being fixed despite recognizing its security risk.'
+          },
+          {
+            step: '5',
+            title: 'Data leaks',
+            action: 'Investigate whether firmware source code, internal reports, customer information, or security documentation were copied or shared outside the company without authorization.'
+          },
+          {
+            step: '6',
+            title: 'Coordination with attackers',
+            action: 'Look for communications, financial transactions, or other forensic evidence linking an employee to the individuals responsible for the theft.'
+          },
+          {
+            step: '7',
+            title: 'Unexplained financial gain',
+            action: 'Investigate whether an employee suddenly received significant cryptocurrency or other assets that cannot be explained by legitimate income.'
+          },
+          {
+            step: '8',
+            title: 'Targeted victim selection',
+            action: 'Determine whether the attackers targeted wallets using information that would normally only be available through internal company records.'
+          },
+          {
+            step: '9',
+            title: 'Unusual timing',
+            action: 'Examine whether the exploit began shortly after an employee left the company, changed roles, or gained privileged access.'
+          },
+          {
+            step: '10',
+            title: 'Confirmation from investigators',
+            action: 'Look for confirmation from law enforcement, blockchain forensic firms, or the company itself identifying insider involvement based on verified evidence.'
+          }
+        ]
+      },
+
+      {
+        sectionTitle: 'Implications if It Were Proven to Be an Inside Job',
+        description: 'If investigators were to prove that the Coldcard incident was an inside job, the consequences could extend beyond the individual incident.',
+
+        items: [
+          {
+            title: 'Loss of Trust',
+            action: 'Confidence in Coinkite and hardware wallets in general could decline, as users expect these devices to protect private keys from both external and internal threats.'
+          },
+          {
+            title: 'Legal Consequences',
+            action: 'Employees involved could face criminal charges, civil lawsuits, and financial penalties, while the company could face increased regulatory scrutiny.'
+          },
+          {
+            title: 'Reputational Damage',
+            action: 'Coinkite’s reputation could suffer, potentially affecting customer adoption, partnerships, and future sales.'
+          },
+          {
+            title: 'Stronger Security Controls',
+            action: 'Hardware wallet manufacturers would likely implement stricter code reviews, access controls, employee monitoring, and independent security audits to reduce insider risk.'
+          },
+          {
+            title: 'Industry-Wide Impact',
+            action: 'The incident could prompt the cryptocurrency industry to strengthen firmware development practices, supply-chain security, and transparency around security vulnerabilities.'
+          },
+          {
+            title: 'Investor and User Caution',
+            action: 'Users may become more cautious about relying on a single hardware wallet provider, potentially increasing adoption of practices such as multisignature wallets, regular firmware verification, and diversified cold-storage solutions.'
+          }
+        ]
+      }
+    ],
+
+    additionalPoints: {
+      title: 'What the Evidence Currently Shows',
+      items: [
+        'The estimated scale of the theft and the apparent sophistication of the attacks have fueled speculation about possible insider involvement.',
+        'The vulnerability was reportedly present in older Coldcard firmware and may have remained undiscovered for years.',
+        'Attackers appeared capable of identifying potentially affected wallets.',
+        'The coordinated nature of the thefts has contributed to the inside-job theory.',
+        'There is currently no evidence establishing that Coinkite employees were involved.',
+        'Coinkite has disputed aspects of the reported claims.',
+        'The circumstances remain under investigation.',
+        'Motive or suspicious timing alone is not sufficient to establish insider involvement.',
+        'A conclusion of insider involvement should be based on verifiable forensic, blockchain, law-enforcement, or company evidence.'
+      ]
+    },
+
+    sources: [
+      {
+        name: 'Coinkite – Official COLDCARD Documentation and Firmware Upgrade Guide',
+        details: 'Official Coldcard documentation concerning the devices, firmware, and upgrade procedures.'
+      },
+      {
+        name: 'CoinDesk',
+        details: 'Coverage of the reported Coldcard wallet exploit and Bitcoin self-custody security.'
+      },
+      {
+        name: 'News.com.au',
+        details: 'Reporting on the alleged firmware vulnerability, affected wallets, and reported losses.'
+      },
+      {
+        name: 'FOX Business',
+        details: 'Coverage of the reported coordinated thefts and Coinkite’s response.'
+      },
+      {
+        name: 'New York Post',
+        details: 'Reporting on the alleged exploit and the ongoing investigation.'
+      }
+    ]
   }
+
+  
 ];
+
