@@ -77,7 +77,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
             return (
               <div
                 key={s.num}
-                className="p-6 rounded-[22px] bg-theme-card border border-theme space-y-4 transition-all"
+                className="p-4 sm:p-6 rounded-[22px] bg-theme-card border border-theme space-y-4 transition-all"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-serif text-2xl text-theme-brass font-normal">

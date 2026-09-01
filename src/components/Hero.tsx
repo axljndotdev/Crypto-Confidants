@@ -71,7 +71,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
           </div>
 
           {/* Metrics Row */}
-          <div className="pt-8 border-t border-theme-subtle grid grid-cols-3 gap-6 sm:gap-12">
+          <div className="pt-8 border-t border-theme-subtle grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-12">
             <div className="flex flex-col items-center space-y-2">
               <div className="font-serif text-3xl sm:text-4xl text-theme-main font-normal">5 years</div>
               <div className="text-[11px] sm:text-xs font-mono font-medium text-theme-muted uppercase tracking-wider">
