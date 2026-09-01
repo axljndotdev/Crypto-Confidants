@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShieldCheck } from 'lucide-react';
 import heroVaultTexture from '../assets/images/hero-vault-texture.png';
 
 interface HeroProps {
@@ -50,6 +51,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
             Crypto Confidants helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.
           </p>
 
+          {/* Shields removed from above actions per request */}
+
           {/* Actions */}
           <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <button
@@ -69,24 +72,36 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
 
           {/* Metrics Row */}
           <div className="pt-8 border-t border-theme-subtle grid grid-cols-3 gap-6 sm:gap-12">
-            <div className="space-y-1">
+            <div className="flex flex-col items-center space-y-2">
               <div className="font-serif text-3xl sm:text-4xl text-theme-main font-normal">5 years</div>
               <div className="text-[11px] sm:text-xs font-mono font-medium text-theme-muted uppercase tracking-wider">
                 IN THE COURTS
               </div>
+              <div className="flex items-center gap-2 pt-2">
+                <ShieldCheck className="h-4 w-4 text-theme-brass" />
+                <div className="text-xs font-sans font-semibold text-theme-main uppercase tracking-[0.12em]">Access</div>
+              </div>
             </div>
 
-            <div className="space-y-1">
+            <div className="flex flex-col items-center space-y-2">
               <div className="font-serif text-3xl sm:text-4xl text-theme-brass font-normal">8</div>
               <div className="text-[11px] sm:text-xs font-mono font-medium text-theme-muted uppercase tracking-wider">
                 CHARGES BROUGHT
               </div>
+              <div className="flex items-center gap-2 pt-2">
+                <ShieldCheck className="h-4 w-4 text-theme-brass" />
+                <div className="text-xs font-sans font-semibold text-theme-main uppercase tracking-[0.12em]">Flexibility</div>
+              </div>
             </div>
 
-            <div className="space-y-1">
+            <div className="flex flex-col items-center space-y-2">
               <div className="font-serif text-3xl sm:text-4xl text-theme-main font-normal">0</div>
               <div className="text-[11px] sm:text-xs font-mono font-medium text-theme-muted uppercase tracking-wider">
                 CONVICTIONS
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                <ShieldCheck className="h-4 w-4 text-theme-brass" />
+                <div className="text-xs font-sans font-semibold text-theme-main uppercase tracking-[0.12em]">Sovereignty</div>
               </div>
             </div>
           </div>

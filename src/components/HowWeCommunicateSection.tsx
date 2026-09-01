@@ -9,27 +9,39 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
   const steps = [
     {
       num: '01',
-      title: 'Reach out',
+      title: 'Begin with a short enquiry',
       description:
-        'Begin with a short enquiry. You can simply introduce yourself and indicate which conversation or engagement you are interested in. There is no need to send sensitive details through the website.',
+        'You can simply introduce yourself and indicate the type of conversation or engagement you are interested in via our signal username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial, identifying, or cryptocurrency-related information in your initial enquiry. Relevant details can be discussed during the Initial Introduction Session.',
     },
     {
       num: '02',
-      title: 'We respond, privately',
-      description:
-        'The conversation moves to Proton Mail. We discuss what you are looking for, determine the appropriate format, and answer any initial questions before proceeding.',
+      title: 'Set up Signal',
+      description: [
+        `Signal is CryptoConfidant’s required communication channel for client conversations. Before your enquiry or Initial Introduction Session, please install the Signal app and create a Signal account.`,
+        `Signal requires a telephone number when registering an account. However, Signal’s username and phone-number privacy settings can allow you to contact CryptoConfidant.com without disclosing that number to us. You will receive CryptoConfidant.com’s private Signal username or invitation link once your Introduction session has been confirmed.`,
+      ],
     },
     {
       num: '03',
-      title: 'Payment & verification',
-      description:
-        'If you decide to proceed, you receive payment instructions and a unique reference. You pay directly, and the payment is independently verified before your conversation or engagement becomes active.',
+      title: 'Initial Introduction Session',
+      description: [
+        'The 20-minute Initial Introduction Session is the first substantive point of communication with CryptoConfidant.com. It provides a private, focused opportunity to describe your circumstances at a high level, explain what you are seeking, and consider whether an ongoing conversation or engagement may be appropriate.',
+        'Once your 20-minute Introduction Session has been confirmed, you will receive the relevant booking details and Signal communication instructions.',
+      ],
     },
     {
       num: '04',
-      title: 'Agree the time',
+      title: 'Continue privately',
+      description: [
+        'Further sessions are agreed mutually and, where appropriate, take place through Signal. Signal supports encrypted messaging and voice or video calls and can allow you to communicate without disclosing your telephone number to CryptoConfidant.com.',
+        'Please review Signal’s privacy and security settings and ensure they meet your own requirements before using this communication method.',
+      ],
+    },
+    {
+      num: '05',
+      title: 'Agreeing next steps',
       description:
-        'Once payment has been verified, we agree a suitable time directly by email. There is no online calendar and no requirement to connect a Google or Microsoft account.',
+        'The Initial Introduction Session is not a commitment to a further engagement. If we both decide to proceed, we will agree the appropriate format, scope, timing, and next steps directly and privately through Signal.',
     },
   ];
 
@@ -55,9 +67,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-theme-muted leading-relaxed font-normal">
-            Everything about how we operate — including how we talk to you —
-            is built around one principle: maintain privacy, your information
-            should exist in as few places as possible, for as short a time as possible.
+            Everything about how we operate — including how we communicate — is built around one principle: privacy. Your information should exist in as few places as possible, for as short a time as possible.
           </p>
         </div>
 
@@ -79,9 +89,17 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
                   {s.title}
                 </h3>
 
-                <p className="text-xs sm:text-sm text-theme-muted leading-relaxed font-normal">
-                  {s.description}
-                </p>
+                {Array.isArray(s.description) ? (
+                  s.description.map((para, idx) => (
+                    <p key={idx} className="text-xs sm:text-sm text-theme-muted leading-relaxed font-normal">
+                      {para}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-xs sm:text-sm text-theme-muted leading-relaxed font-normal">
+                    {s.description}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -124,7 +142,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
                     A free, end-to-end encrypted messaging and calling app.
                     Download it to your phone or desktop to join your
                     confidential conversation — no account details beyond a
-                    phone number, which stays private between us.
+                    confidential user name, which stays private between us.
                   </p>
 
                   <div>
@@ -230,8 +248,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
               Most conversations happen entirely online.
             </strong>{' '}
             For more sensitive situations, we can also arrange a formal
-            in-person meeting — just mention it when you first reach out and
-            we'll work out a time and place together.
+            in-person meeting.
           </p>
         </div>
       </div>

@@ -118,6 +118,8 @@ export const PricingPage: React.FC<PricingPageProps> = ({
             </button>
           </div>
 
+          
+
           {/* =====================================================
               INTRO
           ===================================================== */}
@@ -155,7 +157,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({
 
               You may be legally free to leave a hostile environment, but
               without access to portable money and assets you can move or
-              protect, that freedom may be an illusion. Complacency quietly
+              protect, that freedom may be an illusion. Crypto can offer a conduit to greater asset access flexibility and sovereignty. Complacency quietly
               erodes the options you may one day depend on.
 
               <br />
