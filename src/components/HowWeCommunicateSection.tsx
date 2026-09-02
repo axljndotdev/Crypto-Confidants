@@ -1,5 +1,7 @@
 import React from 'react';
-import { MessageSquare, Mail, MapPin } from 'lucide-react';
+import { MessageSquare, Mail } from 'lucide-react';
+import { BrandMark } from './BrandMark';
+import logoMain from '../assets/images/main-logo.svg';
 
 interface HowWeCommunicateProps {
   onOpenConsultation?: () => void;
@@ -11,7 +13,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
       num: '01',
       title: 'Begin with a short enquiry',
       description:
-        'You can simply introduce yourself and indicate the type of conversation or engagement you are interested in via our signal username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial, identifying, or cryptocurrency-related information in your initial enquiry. Relevant details can be discussed during the Initial Introduction Session.',
+        'You can introduce yourself and indicate the type of conversation or engagement you are interested in via our Signal username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your initial enquiry. Relevant details can be discussed during the Initial Introduction Session.',
     },
     {
       num: '02',
@@ -85,7 +87,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
                   </span>
                 </div>
 
-                <h3 className="font-sans text-lg sm:text-xl font-bold text-theme-main">
+                <h3 className="font-sans text-lg sm:text-xl font-semi-bold text-theme-main">
                   {s.title}
                 </h3>
 
@@ -122,7 +124,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
 
             {/* Signal */}
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#EFE7DA] dark:bg-[#282218] flex items-center justify-center text-theme-brass shrink-0 mt-0.5">
+              <div className="w-10 h-10 rounded-xl bg-[#282218] dark:bg-[#EFE7DA] flex items-center justify-center text-theme-brass shrink-0 mt-0.5">
                 <MessageSquare className="w-5 h-5 stroke-[1.8]" />
               </div>
 
@@ -175,7 +177,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
 
             {/* Proton Mail */}
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#EFE7DA] dark:bg-[#282218] flex items-center justify-center text-theme-brass shrink-0 mt-0.5">
+              <div className="w-10 h-10 rounded-xl bg-[#282218] dark:bg-[#EFE7DA] flex items-center justify-center text-theme-brass shrink-0 mt-0.5">
                 <Mail className="w-5 h-5 stroke-[1.8]" />
               </div>
 
@@ -239,13 +241,12 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
 
         {/* Location / Meeting Note */}
         <div className="p-6 sm:p-8 rounded-[18px] bg-theme-main1 border border-theme border-l-4 border-l-theme-brass flex items-start sm:items-center gap-4 sm:gap-6 mb-20">
-          <div className="w-10 h-10 rounded-full bg-[#EFE7DA] dark:bg-[#282218] flex items-center justify-center text-theme-brass shrink-0 mt-0.5 sm:mt-0">
-            <MapPin className="w-5 h-5 stroke-[1.8]" />
-          </div>
+
+            <BrandMark size={32} src={logoMain} alt="Location" className="w-5 h-5" />
 
           <p className="text-sm sm:text-base text-theme-muted leading-relaxed font-normal">
             <strong className="font-bold text-theme-main">
-              Most conversations happen entirely online.
+              Most conversations happen online.
             </strong>{' '}
             For more sensitive situations, we can also arrange a formal
             in-person meeting.
@@ -257,7 +258,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
       <div className="py-20 md:py-28 bg-[#1c1912] border-t border-theme">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <blockquote className="font-serif text-3xl sm:text-4xl md:text-[40px] text-[#f5f2ea] font-normal leading-[1.22] tracking-tight">
-            "It's very easy for a government to bend the law against someone
+            "It's very easy for a government to weaponize the law against someone
             who holds the wrong opinion, or whose ex-partner has friends in the
             right places. The only real protection is not being reachable when
             it happens."

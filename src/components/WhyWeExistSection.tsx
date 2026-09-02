@@ -46,7 +46,7 @@ export const WhyWeExistSection: React.FC = () => {
               
               {/* Quote Block */}
               <blockquote className="font-serif text-2xl sm:text-3xl md:text-[32px] text-theme-main italic leading-[1.3] tracking-tight font-normal">
-                "If we hadn't already moved what we had into a cold wallet and left the country, we could have been left with nothing — at the whims of a legal system we no longer trusted."
+                "If we hadn't already moved what we had into a cold wallet and left the country, we could have been left with nothing — at the whims of a weaponised legal system we no longer trusted."
               </blockquote>
 
               {/* Asset Class Vulnerability 3-Column Comparison */}

@@ -60,7 +60,7 @@ export const WhoWeHelpSection: React.FC<WhoWeHelpProps> = () => {
                   </div>
 
                   {/* Card Title */}
-                  <h3 className="font-sans text-xl sm:text-2xl font-bold text-theme-main leading-snug">
+                  <h3 className="font-sans text-xl sm:text-2xl font-semi-bold text-theme-main leading-snug">
                     {p.title}
                   </h3>
 
