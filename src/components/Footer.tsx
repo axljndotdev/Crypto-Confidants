@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrandMark } from './BrandMark';
+import logoMain from '../assets/images/main-logo.svg';
 import { ThemeMode } from '../types';
 
 interface FooterProps {
@@ -41,7 +42,7 @@ export const Footer: React.FC<FooterProps> = ({
           
           {/* Brand Logo & Name */}
           <div className="md:col-span-5 flex items-center gap-3">
-            <BrandMark size={32} variant="brass" />
+            <BrandMark size={32} variant="brass" src={logoMain} alt="Crypto Confidant" />
             <span className="font-serif text-2xl sm:text-3xl font-normal text-theme-main underline decoration-theme-brass/50 underline-offset-4 decoration-1">
               Crypto Confidant
             </span>

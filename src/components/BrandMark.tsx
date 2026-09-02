@@ -4,12 +4,15 @@ interface BrandMarkProps {
   size?: number;
   variant?: 'brass' | 'monochrome' | 'outline' | 'brass-bg';
   className?: string;
+  src?: string;
+  alt?: string;
 }
 
 export const BrandMark: React.FC<BrandMarkProps> = ({
   size = 32,
   variant = 'brass',
   className = ''
+  , src, alt
 }) => {
   const gradientId = `brass-grad-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -22,6 +25,21 @@ export const BrandMark: React.FC<BrandMarkProps> = ({
     variant === 'brass'
       ? 'var(--color-brass, #C99A52)'
       : 'currentColor';
+
+  // If an external image source is provided, render that as the mark.
+  if (src) {
+    return (
+      <div className={`inline-flex items-center justify-center relative select-none shrink-0 ${className}`} style={{ width: size, height: size }}>
+        <img
+          src={src}
+          alt={alt || 'Brand mark'}
+          width={size}
+          height={size}
+          className="object-contain w-full h-full transition-transform duration-300 hover:scale-105"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`inline-flex items-center justify-center relative select-none shrink-0 ${className}`} style={{ width: size, height: size }}>

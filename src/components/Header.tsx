@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrandMark } from './BrandMark';
+import logoMain from '../assets/images/main-logo.svg';
 import { ThemeMode } from '../types';
 import { Sun, Moon, Shield, Menu, X, ArrowUpRight } from 'lucide-react';
 
@@ -104,10 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
           }}
         >
           <div className="text-theme-brass flex items-center justify-center shrink-0">
-            <BrandMark
-              size={28}
-              variant="brass"
-            />
+            <BrandMark size={28} variant="brass" src={logoMain} alt="Crypto Confidant" />
           </div>
 
           <span className="font-serif text-2xl sm:text-3xl font-normal tracking-tight text-theme-main underline decoration-theme-brass/60 underline-offset-4 decoration-1 group-hover:text-theme-brass transition-colors truncate">
