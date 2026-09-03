@@ -57,7 +57,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
         {/* Section Header */}
         <div className="space-y-4 max-w-3xl mb-16">
           <div className="flex items-center gap-3">
-            <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+            <span/>
 
             <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
               HOW WE COMMUNICATE
@@ -124,8 +124,20 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
 
             {/* Signal */}
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#282218] dark:bg-[#EFE7DA] flex items-center justify-center text-theme-brass shrink-0 mt-0.5">
-                <MessageSquare className="w-5 h-5 stroke-[1.8]" />
+              <div className="w-12 h-12
+                      rounded-[13px]
+                      bg-[#E9DEC5]
+                      flex items-center justify-center
+                      text-[#8A5A1E]
+                      shrink-0
+                      mt-0.5
+
+                      dark:w-10
+                      dark:h-10
+                      dark:rounded-xl
+                      dark:bg-[#282218]
+                      dark:text-theme-brass">
+                <MessageSquare className="w-5 h-5 stroke-[2]" />
               </div>
 
               <div className="space-y-2">
@@ -177,8 +189,20 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
 
             {/* Proton Mail */}
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#282218] dark:bg-[#EFE7DA] flex items-center justify-center text-theme-brass shrink-0 mt-0.5">
-                <Mail className="w-5 h-5 stroke-[1.8]" />
+              <div className="w-12 h-12
+                      rounded-[13px]
+                      bg-[#E9DEC5]
+                      flex items-center justify-center
+                      text-[#8A5A1E]
+                      shrink-0
+                      mt-0.5
+
+                      dark:w-10
+                      dark:h-10
+                      dark:rounded-xl
+                      dark:bg-[#282218]
+                      dark:text-theme-brass">
+                <Mail className="w-5 h-5 stroke-[2]" />
               </div>
 
               <div className="space-y-3">

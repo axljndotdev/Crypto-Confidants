@@ -37,7 +37,7 @@ export const WhatWeOfferSection: React.FC<WhatWeOfferProps> = () => {
           {/* Left Column: Heading & Context */}
           <div className="lg:col-span-5 space-y-6 sm:space-y-8">
             <div className="flex items-center gap-3">
-              <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+              <span/>
               <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
                 WHAT WE OFFER
               </span>

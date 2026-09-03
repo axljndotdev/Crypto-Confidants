@@ -39,7 +39,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
 
           {/* Eyebrow */}
           <div className="flex items-center gap-3">
-            <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+            <span/>
 
             <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
               GLOBAL EDUCATION, A CONFIDENTIAL EAR
@@ -77,11 +77,11 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
           </div>
 
           {/* Trust / Principles Row */}
-          <div className="pt-8 border-t border-theme-subtle grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-12">
+          <div className="pt-8 border-t border-theme-subtle flex flex-row flex-wrap justify-between gap-10 sm:gap-10">
 
             {/* Access */}
-            <div className="flex flex-col items-center space-y-2">
-              <BrandMark size={32} src={logoMain} alt="Security" className="h-8 w-8" />
+              <div className="flex flex-col items-center space-y-2">
+              <BrandMark size={40} src={logoMain} alt="Security" className="h-12 w-12" />
 
               <div className="text-xs sm:text-sm font-sans font-semibold text-theme-main uppercase tracking-[0.12em] pt-1">
                 Access
@@ -89,8 +89,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
             </div>
 
             {/* Flexibility */}
-            <div className="flex flex-col items-center space-y-2">
-              <BrandMark size={32} src={logoMain} alt="Flexibility" className="h-8 w-8" />
+              <div className="flex flex-col items-center space-y-2">
+              <BrandMark size={40} src={logoMain} alt="Flexibility" className="h-12 w-12" />
 
               <div className="text-xs sm:text-sm font-sans font-semibold text-theme-main uppercase tracking-[0.12em] pt-1">
                 Flexibility
@@ -98,8 +98,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
             </div>
 
             {/* Sovereignty */}
-            <div className="flex flex-col items-center space-y-2">
-              <BrandMark size={32} src={logoMain} alt="Sovereignty" className="h-8 w-8" />
+              <div className="flex flex-col items-center space-y-2">
+              <BrandMark size={40} src={logoMain} alt="Sovereignty" className="h-12 w-12" />
 
               <div className="text-xs sm:text-sm font-sans font-semibold text-theme-main uppercase tracking-[0.12em] pt-1">
                 Sovereignty

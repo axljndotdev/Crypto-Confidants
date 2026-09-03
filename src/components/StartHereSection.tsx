@@ -21,7 +21,7 @@ export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenConsul
         
         {/* Eyebrow */}
         <div className="flex items-center justify-center gap-3">
-          <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
+          <span/>
           <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
             START HERE
           </span>

@@ -13,7 +13,6 @@ export const WhyWeExistSection: React.FC = () => {
             {/* Header inside left column */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
                 <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
                   WHY WE EXIST
                 </span>
