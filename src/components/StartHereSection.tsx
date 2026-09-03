@@ -34,7 +34,7 @@ export const StartHereSection: React.FC<StartHereSectionProps> = ({ onOpenConsul
 
         {/* Subtitle */}
         <p className="text-lg sm:text-xl text-theme-muted max-w-2xl mx-auto leading-relaxed font-normal">
-          Talk to someone who has actually been through it — not a call center, not a bot. A confidential first conversation to help you understand your options.
+          Talk to somebody with experience who has actually been through it. A confidential first conversation to help you understand your options.
         </p>
 
         {/* Action Buttons */}

@@ -48,7 +48,7 @@ export const WhatWeOfferSection: React.FC<WhatWeOfferProps> = () => {
             </h2>
 
             <p className="text-lg sm:text-xl text-theme-muted leading-relaxed font-normal">
-              This isn't a script for one specific move. It's global education on the crypto landscape, paired with a confidential space to process your own situation before you decide anything.
+              This isn’t a script for one specific move. It’s global awareness of what can be available to you for asset protection and portability, paired with a confidential space to process your own situation before you decide anything.
             </p>
           </div>
 

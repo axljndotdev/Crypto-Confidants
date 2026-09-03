@@ -13,7 +13,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
       num: '01',
       title: 'Begin with a short enquiry',
       description:
-        'You can introduce yourself and indicate the type of conversation or engagement you are interested in via our Signal username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your initial enquiry. Relevant details can be discussed during the Initial Introduction Session.',
+        'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
     },
     {
       num: '02',
@@ -35,7 +35,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
       num: '04',
       title: 'Continue privately',
       description: [
-        'Further sessions are agreed mutually and, where appropriate, take place through Signal. Signal supports encrypted messaging and voice or video calls and can allow you to communicate without disclosing your telephone number to CryptoConfidant.com.',
+        'Further sessions are agreed mutually and, where appropriate, take place through Signal. Signal supports encrypted messaging and voice or video calls and can allow you to communicate via your Signal username without disclosing your name or telephone number to CryptoConfidant.com.',
         'Please review Signal’s privacy and security settings and ensure they meet your own requirements before using this communication method.',
       ],
     },
@@ -259,7 +259,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <blockquote className="font-serif text-3xl sm:text-4xl md:text-[40px] text-[#f5f2ea] font-normal leading-[1.22] tracking-tight">
             "It's very easy for a government to weaponize the law against someone
-            who holds the wrong opinion, or whose ex-partner has friends in the
+            who holds the wrong opinion, or whose adversaries have friends in the
             right places. The only real protection is not being reachable when
             it happens."
           </blockquote>
