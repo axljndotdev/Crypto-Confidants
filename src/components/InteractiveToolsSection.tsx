@@ -71,7 +71,7 @@ export const InteractiveToolsSection: React.FC<InteractiveToolsSectionProps> = (
         <div className="pt-4">
           {activeTab === 'audit' && (
             <div id="audit">
-              <SecurityAuditTool onOpenConsultation={onOpenConsultation} />
+              <SecurityAuditTool onOpenConsultationWithScore={(score) => onOpenConsultation(`audit:${score}`)} />
             </div>
           )}
 

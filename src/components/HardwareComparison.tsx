@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { HARDWARE_DEVICES } from '../data';
 import { ShieldCheck, Cpu, WifiOff, Code2, Award, Check, X, ExternalLink } from 'lucide-react';
 
-export const HardwareComparison: React.FC = () => {
+export const HardwareComparison: React.FC<{ onOpenConsultation?: (topic?: string) => void }> = ({ onOpenConsultation }) => {
   const [filterAirgapOnly, setFilterAirgapOnly] = useState(false);
   const [filterOpenSourceOnly, setFilterOpenSourceOnly] = useState(false);
 

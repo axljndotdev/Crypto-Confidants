@@ -17,21 +17,15 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = ({ conte
   const steps = [
     {
       num: '01',
-<<<<<<< HEAD
-      title: 'Begin with a short enquiry',
-      description:
-        'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Send a message via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
-=======
-      title: content?.step1Title || 'Begin with a short enquiry',
-      description: content?.step1Description ||
-        'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
->>>>>>> aae0d3268a33e626824ac996345d844de247f258
-    {
-      num: '01',
       title: content?.step1Title || 'Begin with a short enquiry',
       description: content?.step1Description ||
         'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
     },
+    {
+      num: '02',
+      title: content?.step2Title || 'Set up Signal',
+      description: content?.step2Description ||
+        `Signal is CryptoConfidant’s required communication channel for client conversations. Before your enquiry or Initial Introduction Session, please install the Signal app and create a Signal account. Signal requires a telephone number when registering an account. However, Signal’s username and phone-number privacy settings can allow you to contact CryptoConfidant.com without disclosing that number to us.`,
     },
     {
       num: '03',

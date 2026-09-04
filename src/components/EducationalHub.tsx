@@ -3,7 +3,7 @@ import { EDUCATIONAL_GUIDES } from '../data';
 import { EducationalGuide } from '../types';
 import { BookOpen, Search, Filter, Clock, ArrowRight, X, Shield, CheckCircle2 } from 'lucide-react';
 
-export const EducationalHub: React.FC = () => {
+export const EducationalHub: React.FC<{ onOpenConsultation?: (topic?: string) => void }> = ({ onOpenConsultation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activeGuideModal, setActiveGuideModal] = useState<EducationalGuide | null>(null);
