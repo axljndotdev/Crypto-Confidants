@@ -96,12 +96,12 @@ export const Footer: React.FC<FooterProps> = ({
             <h4 className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
               CONTACT
             </h4>
-            <a
-              href="mailto:hello@cryptoconfidant.com"
-              className="block text-sm sm:text-base text-theme-muted hover:text-theme-main transition-colors font-normal"
-            >
-              hello@cryptoconfidant.com
-            </a>
+            <button
+            onClick={onOpenPricing}
+            className="inline-flex items-center text-xs sm:text-sm font-medium text-theme-accent hover:underline gap-1"
+          >
+            <span>Book a Conversation</span>
+          </button>
           </div>
 
         </div>

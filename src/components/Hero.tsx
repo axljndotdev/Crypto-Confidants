@@ -84,7 +84,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
               <BrandMark size={40} src={logoMain} alt="Security" className="h-12 w-12" />
 
               <div className="text-xs sm:text-sm font-sans font-semibold text-theme-main uppercase tracking-[0.12em] pt-1">
-                Access
+                Flexibility
               </div>
             </div>
 
@@ -93,7 +93,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
               <BrandMark size={40} src={logoMain} alt="Flexibility" className="h-12 w-12" />
 
               <div className="text-xs sm:text-sm font-sans font-semibold text-theme-main uppercase tracking-[0.12em] pt-1">
-                Flexibility
+                Access
               </div>
             </div>
 

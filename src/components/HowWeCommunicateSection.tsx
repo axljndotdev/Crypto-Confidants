@@ -13,7 +13,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
       num: '01',
       title: 'Begin with a short enquiry',
       description:
-        'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
+        'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Send a message via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
     },
     {
       num: '02',
