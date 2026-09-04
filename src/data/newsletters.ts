@@ -6,6 +6,9 @@ export interface Newsletter {
   subtitle?: string;
   category: string;
   readTime: string;
+  pdfUrl?: string;
+  pdfFileName?: string;
+  pdfFileSize?: string;
   introParagraphs: string[];
   summaryTable?: {
     how?: string;

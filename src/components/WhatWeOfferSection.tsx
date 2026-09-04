@@ -1,30 +1,36 @@
 import React from 'react';
+import { SiteContent } from '../types';
 
 interface WhatWeOfferProps {
   onOpenConsultation?: (topic?: string) => void;
+  content?: SiteContent['whatWeOffer'];
 }
 
-export const WhatWeOfferSection: React.FC<WhatWeOfferProps> = () => {
+export const WhatWeOfferSection: React.FC<WhatWeOfferProps> = ({ content }) => {
+  const eyebrow = content?.eyebrow || 'WHAT WE OFFER';
+  const heading = content?.heading || "A clear picture of what's out there, and someone to think it through with.";
+  const description = content?.description || "This isn’t a script for one specific move. It’s global awareness of what can be available to you for asset protection and portability, paired with a confidential space to process your own situation before you decide anything.";
+
   const offerings = [
     {
       num: '01',
-      title: 'The global crypto landscape, explained',
-      description: 'What self-custody actually means, how cold storage and hardware wallets work, and what non-custodial options exist around the world — explained plainly, without jargon or sales pressure.'
+      title: content?.offering1Title || 'The global crypto landscape, explained',
+      description: content?.offering1Description || 'What self-custody actually means, how cold storage and hardware wallets work, and what non-custodial options exist around the world — explained plainly, without jargon or sales pressure.'
     },
     {
       num: '02',
-      title: 'A confidential conversation',
-      description: 'Time with someone who has actually lived through a legal crisis, to help you think clearly about your own situation — not to tell you what to do, but to help you see your options without panic.'
+      title: content?.offering2Title || 'A confidential conversation',
+      description: content?.offering2Description || 'Time with someone who has actually lived through a legal crisis, to help you think clearly about your own situation — not to tell you what to do, but to help you see your options without panic.'
     },
     {
       num: '03',
-      title: 'Referrals to independent specialists',
-      description: 'When something needs a license — legal advice, tax structuring, licensed financial guidance — if necessary we connect you with independent professionals in the relevant jurisdiction. We don\'t provide that advice ourselves.'
+      title: content?.offering3Title || 'Referrals to independent specialists',
+      description: content?.offering3Description || 'When something needs a license — legal advice, tax structuring, licensed financial guidance — if necessary we connect you with independent professionals in the relevant jurisdiction. We don\'t provide that advice ourselves.'
     },
     {
       num: '04',
-      title: 'A community that\'s been through it',
-      description: 'Direct access to people who understand what this actually feels like—including those who have faced persecution, unjust asset loss, coercive government action, or legal systems weaponized to exhaust, intimidate, and silence them.'
+      title: content?.offering4Title || 'A community that\'s been through it',
+      description: content?.offering4Description || 'Direct access to people who understand what this actually feels like—including those who have faced persecution, unjust asset loss, coercive government action, or legal systems weaponized to exhaust, intimidate, and silence them.'
     }
   ];
 
@@ -39,16 +45,16 @@ export const WhatWeOfferSection: React.FC<WhatWeOfferProps> = () => {
             <div className="flex items-center gap-3">
               <span/>
               <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
-                WHAT WE OFFER
+                {eyebrow}
               </span>
             </div>
 
             <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-theme-main tracking-tight leading-[1.12]">
-              A clear picture of what's out there, and someone to think it through with.
+              {heading}
             </h2>
 
             <p className="text-lg sm:text-xl text-theme-muted leading-relaxed font-normal">
-              This isn’t a script for one specific move. It’s global awareness of what can be available to you for asset protection and portability, paired with a confidential space to process your own situation before you decide anything.
+              {description}
             </p>
           </div>
 

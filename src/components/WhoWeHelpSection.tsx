@@ -1,32 +1,40 @@
 import React from 'react';
 import { Shield, Sun, Activity } from 'lucide-react';
+import { SiteContent } from '../types';
 
 interface WhoWeHelpProps {
   onOpenConsultation?: (topic?: string) => void;
+  content?: SiteContent['whoWeHelp'];
 }
 
-export const WhoWeHelpSection: React.FC<WhoWeHelpProps> = () => {
+export const WhoWeHelpSection: React.FC<WhoWeHelpProps> = ({ content }) => {
+  const eyebrow = content?.eyebrow || 'WHO WE HELP';
+  const heading = content?.heading || 'People whose wealth is one accusation away from disappearing.';
+  const persona1Title = content?.persona1Title || 'Facing wrongful prosecution';
+  const persona1Description = content?.persona1Description || "People targeted by false or unverified accusations, who want a clear picture of what's actually possible for their financial situation and someone steady to talk it through with.";
+  const persona2Title = content?.persona2Title || 'Holding views out of favor';
+  const persona2Description = content?.persona2Description || 'Anyone whose political, religious, or personal opinions put them at odds with the prevailing sentiment of the government currently in power — anywhere in the world.';
+  const persona3Title = content?.persona3Title || 'Planning a real exit';
+  const persona3Description = content?.persona3Description || "Business owners and individuals who want to understand genuine portability of wealth — not insurance on paper, but a clear picture of what's actually available to them, globally.";
+
   const personas = [
     {
       id: 'wrongful-prosecution',
       Icon: Shield,
-      title: 'Facing wrongful prosecution',
-      description:
-        "People targeted by false or unverified accusations, who want a clear picture of what's actually possible for their financial situation and someone steady to talk it through with.",
+      title: persona1Title,
+      description: persona1Description,
     },
     {
       id: 'views-out-of-favor',
       Icon: Sun,
-      title: 'Holding views out of favor',
-      description:
-        'Anyone whose political, religious, or personal opinions put them at odds with the prevailing sentiment of the government currently in power — anywhere in the world.',
+      title: persona2Title,
+      description: persona2Description,
     },
     {
       id: 'planning-real-exit',
       Icon: Activity,
-      title: 'Planning a real exit',
-      description:
-        "Business owners and individuals who want to understand genuine portability of wealth — not insurance on paper, but a clear picture of what's actually available to them, globally.",
+      title: persona3Title,
+      description: persona3Description,
     },
   ];
 
@@ -58,7 +66,7 @@ export const WhoWeHelpSection: React.FC<WhoWeHelpProps> = () => {
                 text-theme-brass
               "
             >
-              WHO WE HELP
+              {eyebrow}
             </span>
           </div>
 
@@ -73,7 +81,7 @@ export const WhoWeHelpSection: React.FC<WhoWeHelpProps> = () => {
               max-w-3xl
             "
           >
-            People whose wealth is one accusation away from disappearing.
+            {heading}
           </h2>
         </div>
 

@@ -2,13 +2,24 @@ import React from 'react';
 import { BrandMark } from './BrandMark';
 import heroVaultTexture from '../assets/images/hero-vault-texture.png';
 import logoMain from '../assets/images/main-logo.svg';
+import { SiteContent } from '../types';
 
 interface HeroProps {
   onOpenPricing: () => void;
   onReadNewsletter: () => void;
+  content?: SiteContent['hero'];
 }
 
-export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) => {
+export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter, content }) => {
+  const eyebrow = content?.eyebrow || 'GLOBAL EDUCATION, A CONFIDENTIAL EAR';
+  const headline = content?.headline || "Your wealth shouldn't depend on staying in a government's good graces.";
+  const subparagraph = content?.subparagraph || "Crypto Confidants helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.";
+  const primaryCta = content?.primaryCta || 'Start a conversation';
+  const secondaryCta = content?.secondaryCta || 'Read Newsletter';
+  const pillar1 = content?.pillar1 || 'Access';
+  const pillar2 = content?.pillar2 || 'Flexibility';
+  const pillar3 = content?.pillar3 || 'Sovereignty';
+
   return (
     <section
       data-theme="dark"
@@ -40,23 +51,19 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
           {/* Eyebrow */}
           <div className="flex items-center gap-3">
             <span/>
-
             <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
-              GLOBAL EDUCATION, A CONFIDENTIAL EAR
+              {eyebrow}
             </span>
           </div>
 
           {/* Headline */}
           <h1 className="font-serif text-5xl sm:text-5xl md:text-6xl lg:text-[70px] font-normal tracking-tight text-theme-main leading-[1.02]">
-            Your wealth shouldn't depend on staying in a government's good graces.
+            {headline}
           </h1>
 
           {/* Sub-paragraph */}
           <p className="text-base sm:text-lg text-theme-muted leading-relaxed font-normal">
-            Crypto Confidants helps people around the world understand what's actually
-            available in the crypto space — self-custody, cold storage, and true
-            financial portability — and gives you a confidential space to think clearly
-            through your own situation before you decide anything.
+            {subparagraph}
           </p>
 
           {/* Actions */}
@@ -65,44 +72,41 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter }) =
               onClick={onOpenPricing}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm sm:text-base font-semibold rounded-full bg-[#A6732E] hover:bg-[#C28938] text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
             >
-              <span>Start a conversation</span>
+              <span>{primaryCta}</span>
             </button>
 
             <button
               onClick={onReadNewsletter}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm sm:text-base font-medium text-theme-main border border-theme rounded-full bg-theme-surface/50 hover:bg-theme-surface hover:border-theme-brass/40 transition-all cursor-pointer"
             >
-              <span>Read Newsletter</span>
+              <span>{secondaryCta}</span>
             </button>
           </div>
 
           {/* Trust / Principles Row */}
           <div className="pt-8 border-t border-theme-subtle flex flex-row flex-wrap justify-between gap-10 sm:gap-10">
 
-            {/* Access */}
-              <div className="flex flex-col items-center space-y-2">
-              <BrandMark size={40} src={logoMain} alt="Security" className="h-12 w-12" />
-
+            {/* Pillar 1 */}
+            <div className="flex flex-col items-center space-y-2">
+              <BrandMark size={40} src={logoMain} alt={pillar1} className="h-12 w-12" />
               <div className="text-xs sm:text-sm font-sans font-semibold text-theme-main uppercase tracking-[0.12em] pt-1">
-                Flexibility
+                {pillar1}
               </div>
             </div>
 
-            {/* Flexibility */}
-              <div className="flex flex-col items-center space-y-2">
-              <BrandMark size={40} src={logoMain} alt="Flexibility" className="h-12 w-12" />
-
+            {/* Pillar 2 */}
+            <div className="flex flex-col items-center space-y-2">
+              <BrandMark size={40} src={logoMain} alt={pillar2} className="h-12 w-12" />
               <div className="text-xs sm:text-sm font-sans font-semibold text-theme-main uppercase tracking-[0.12em] pt-1">
-                Access
+                {pillar2}
               </div>
             </div>
 
-            {/* Sovereignty */}
-              <div className="flex flex-col items-center space-y-2">
-              <BrandMark size={40} src={logoMain} alt="Sovereignty" className="h-12 w-12" />
-
+            {/* Pillar 3 */}
+            <div className="flex flex-col items-center space-y-2">
+              <BrandMark size={40} src={logoMain} alt={pillar3} className="h-12 w-12" />
               <div className="text-xs sm:text-sm font-sans font-semibold text-theme-main uppercase tracking-[0.12em] pt-1">
-                Sovereignty
+                {pillar3}
               </div>
             </div>
 

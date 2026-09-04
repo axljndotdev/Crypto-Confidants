@@ -2,47 +2,53 @@ import React from 'react';
 import { MessageSquare, Mail } from 'lucide-react';
 import { BrandMark } from './BrandMark';
 import logoMain from '../assets/images/main-logo.svg';
+import { SiteContent } from '../types';
 
 interface HowWeCommunicateProps {
   onOpenConsultation?: () => void;
+  content?: SiteContent['comms'];
 }
 
-export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
+export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = ({ content }) => {
+  const eyebrow = content?.eyebrow || 'HOW WE COMMUNICATE';
+  const heading = content?.heading || 'A confidant, not a form submission.';
+  const description = content?.description || 'Everything about how we operate — including how we communicate — is built around one principle: privacy. Your information should exist in as few places as possible, for as short a time as possible.';
+
   const steps = [
     {
       num: '01',
+<<<<<<< HEAD
       title: 'Begin with a short enquiry',
       description:
         'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Send a message via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
-    },
+=======
+      title: content?.step1Title || 'Begin with a short enquiry',
+      description: content?.step1Description ||
+        'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
+>>>>>>> aae0d3268a33e626824ac996345d844de247f258
     {
-      num: '02',
-      title: 'Set up Signal',
-      description: [
-        `Signal is CryptoConfidant’s required communication channel for client conversations. Before your enquiry or Initial Introduction Session, please install the Signal app and create a Signal account.`,
-        `Signal requires a telephone number when registering an account. However, Signal’s username and phone-number privacy settings can allow you to contact CryptoConfidant.com without disclosing that number to us. You will receive CryptoConfidant.com’s private Signal username or invitation link once your Introduction session has been confirmed.`,
-      ],
+      num: '01',
+      title: content?.step1Title || 'Begin with a short enquiry',
+      description: content?.step1Description ||
+        'You can introduce yourself and indicate the type of conversation or engagement you are interested in. Via Signal - our username @cryptoconfidant.01 or book your Initial Introduction Session. There is no need to send sensitive personal, financial or identifying information in your enquiry. Relevant details can be discussed confidentialy during the Initial Introduction Session.',
+    },
     },
     {
       num: '03',
-      title: 'Initial Introduction Session',
-      description: [
-        'The 20-minute Initial Introduction Session is the first substantive point of communication with CryptoConfidant.com. It provides a private, focused opportunity to describe your circumstances at a high level, explain what you are seeking, and consider whether an ongoing conversation or engagement may be appropriate.',
-        'Once your 20-minute Introduction Session has been confirmed, you will receive the relevant booking details and Signal communication instructions.',
-      ],
+      title: content?.step3Title || 'Initial Introduction Session',
+      description: content?.step3Description ||
+        'The 20-minute Initial Introduction Session is the first substantive point of communication with CryptoConfidant.com. It provides a private, focused opportunity to describe your circumstances at a high level, explain what you are seeking, and consider whether an ongoing conversation or engagement may be appropriate.',
     },
     {
       num: '04',
-      title: 'Continue privately',
-      description: [
+      title: content?.step4Title || 'Continue privately',
+      description: content?.step4Description ||
         'Further sessions are agreed mutually and, where appropriate, take place through Signal. Signal supports encrypted messaging and voice or video calls and can allow you to communicate via your Signal username without disclosing your name or telephone number to CryptoConfidant.com.',
-        'Please review Signal’s privacy and security settings and ensure they meet your own requirements before using this communication method.',
-      ],
     },
     {
       num: '05',
-      title: 'Agreeing next steps',
-      description:
+      title: content?.step5Title || 'Agreeing next steps',
+      description: content?.step5Description ||
         'The Initial Introduction Session is not a commitment to a further engagement. If we both decide to proceed, we will agree the appropriate format, scope, timing, and next steps directly and privately through Signal.',
     },
   ];
@@ -60,16 +66,16 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = () => {
             <span/>
 
             <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
-              HOW WE COMMUNICATE
+              {eyebrow}
             </span>
           </div>
 
           <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-theme-main tracking-tight">
-            A confidant, not a form submission.
+            {heading}
           </h2>
 
           <p className="text-base sm:text-lg text-theme-muted leading-relaxed font-normal">
-            Everything about how we operate — including how we communicate — is built around one principle: privacy. Your information should exist in as few places as possible, for as short a time as possible.
+            {description}
           </p>
         </div>
 
