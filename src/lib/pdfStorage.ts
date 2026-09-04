@@ -80,7 +80,7 @@ export async function savePdfToIndexedDb(
   });
 }
 
-export async function getPdfBlobUrl(newsletterId: string): Promise<{ blobUrl: string; fileName: string; fileSize: string } | null> {
+export async function getPdfBlobUrl(newsletterId: string): Promise<{ blobUrl: string; fileName: string; fileSize: string; blob: Blob } | null> {
   try {
     const db = await openDB();
     return new Promise((resolve) => {
@@ -96,6 +96,7 @@ export async function getPdfBlobUrl(newsletterId: string): Promise<{ blobUrl: st
             blobUrl,
             fileName: record.fileName,
             fileSize: record.fileSize,
+            blob: record.blob,
           });
         } else {
           resolve(null);
@@ -111,7 +112,7 @@ export async function getPdfBlobUrl(newsletterId: string): Promise<{ blobUrl: st
   }
 }
 
-export async function deletePdfFromIndexedDb(newsletterId: string): Promise<void> {
+export async function deletePdfFromIndexedDb(newsletterId: string): Promise<boolean> {
   try {
     const db = await openDB();
     return new Promise((resolve, reject) => {
@@ -119,10 +120,50 @@ export async function deletePdfFromIndexedDb(newsletterId: string): Promise<void
       const store = transaction.objectStore(STORE_NAME);
       const deleteRequest = store.delete(newsletterId);
 
-      deleteRequest.onsuccess = () => resolve();
-      deleteRequest.onerror = () => reject(deleteRequest.error);
+      deleteRequest.onsuccess = () => {
+        resolve(true);
+      };
+      deleteRequest.onerror = () => {
+        reject(deleteRequest.error);
+      };
     });
   } catch (err) {
-    console.warn('Error deleting PDF from IndexedDB:', err);
+    console.error('Hard deletion of PDF from IndexedDB failed:', err);
+    return false;
   }
 }
+
+export async function hardDeletePdfFromStorage(newsletterId: string): Promise<boolean> {
+  return await deletePdfFromIndexedDb(newsletterId);
+}
+
+export async function hasStoredPdf(newsletterId: string): Promise<boolean> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const req = store.count(newsletterId);
+      req.onsuccess = () => resolve(req.result > 0);
+      req.onerror = () => resolve(false);
+    });
+  } catch {
+    return false;
+  }
+}
+
+export async function getAllStoredPdfIds(): Promise<string[]> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const req = store.getAllKeys();
+      req.onsuccess = () => resolve((req.result as string[]) || []);
+      req.onerror = () => resolve([]);
+    });
+  } catch {
+    return [];
+  }
+}
+
