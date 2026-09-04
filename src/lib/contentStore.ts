@@ -10,7 +10,7 @@ export const defaultSiteContent: SiteContent = {
   hero: {
     eyebrow: 'GLOBAL EDUCATION, A CONFIDENTIAL EAR',
     headline: "Your wealth shouldn't depend on staying in a government's good graces.",
-    subparagraph: "Crypto Confidants helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.",
+    subparagraph: " helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.",
     primaryCta: 'Start a conversation',
     secondaryCta: 'Read Newsletter',
     pillar1: 'Access',

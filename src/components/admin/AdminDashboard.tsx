@@ -1632,15 +1632,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Intro Paragraph</label>
-                    <textarea
-                      rows={4}
-                      value={editingIssue.introParagraphs?.[0] || ''}
-                      onChange={(e) => setEditingIssue({ ...editingIssue, introParagraphs: [e.target.value] })}
-                      className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
-                    />
-                  </div>
 
                   {/* Newsletter PDF Edition Upload & Attachment */}
                   <div className="p-5 rounded-2xl bg-[#181613] border border-[#C4AC76]/30 space-y-4">
@@ -1763,115 +1754,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
 
                     {/* External PDF URL input */}
-                    <div className="pt-1">
-                      <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">
-                        Or enter hosted PDF URL (IPFS, CDN, S3, or Google Drive)
-                      </label>
-                      <input
-                        id="newsletter-pdf-url-input"
-                        type="url"
-                        value={editingIssue.pdfUrl || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setEditingIssue({
-                            ...editingIssue,
-                            pdfUrl: val,
-                            pdfFileName: val ? val.split('/').pop()?.split('?')[0] || 'newsletter.pdf' : undefined,
-                            pdfFileSize: val ? 'External PDF' : undefined,
-                          });
-                        }}
-                        placeholder="https://example.com/newsletter-01.pdf"
-                        className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-xs text-[#ECE6D6] font-mono placeholder-[#6B6252] focus:outline-none focus:border-[#C4AC76]"
-                      />
-                    </div>
+                    
                   </div>
 
-                  {/* Summary Table Fields */}
-                  {editingIssue.summaryTable && (
-                    <div className="pt-3 border-t border-[#C4AC76]/10 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono uppercase text-[#C4AC76] font-semibold">
-                          Executive Summary Table (How / When / Where / Why)
-                        </span>
-                        <span className="text-[11px] font-mono text-[#8E8E8E]">Website Table Edition</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">How</label>
-                          <textarea
-                            rows={2}
-                            value={editingIssue.summaryTable.how || ''}
-                            onChange={(e) => setEditingIssue({
-                              ...editingIssue,
-                              summaryTable: { ...editingIssue.summaryTable, how: e.target.value }
-                            })}
-                            className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">When</label>
-                          <textarea
-                            rows={2}
-                            value={editingIssue.summaryTable.when || ''}
-                            onChange={(e) => setEditingIssue({
-                              ...editingIssue,
-                              summaryTable: { ...editingIssue.summaryTable, when: e.target.value }
-                            })}
-                            className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">Where</label>
-                          <textarea
-                            rows={2}
-                            value={editingIssue.summaryTable.where || ''}
-                            onChange={(e) => setEditingIssue({
-                              ...editingIssue,
-                              summaryTable: { ...editingIssue.summaryTable, where: e.target.value }
-                            })}
-                            className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">Why</label>
-                          <textarea
-                            rows={2}
-                            value={editingIssue.summaryTable.why || ''}
-                            onChange={(e) => setEditingIssue({
-                              ...editingIssue,
-                              summaryTable: { ...editingIssue.summaryTable, why: e.target.value }
-                            })}
-                            className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Protection Steps Summary */}
-                  {editingIssue.protectionSteps && editingIssue.protectionSteps.length > 0 && (
-                    <div className="pt-3 border-t border-[#C4AC76]/10 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono uppercase text-[#C4AC76] font-semibold">
-                          Actionable Protection Steps ({editingIssue.protectionSteps[0]?.items?.length || 0} Steps)
-                        </span>
-                        <span className="text-[11px] font-mono text-emerald-400">Extracted from PDF</span>
-                      </div>
-                      <div className="p-3 rounded-xl bg-[#181613] border border-[#C4AC76]/20 space-y-2">
-                        {editingIssue.protectionSteps[0]?.items?.slice(0, 4).map((item, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-xs">
-                            <span className="px-1.5 py-0.5 rounded bg-[#8A5A1E]/20 text-[#C4AC76] font-mono text-[10px]">
-                              Step {item.step || idx + 1}
-                            </span>
-                            <div className="min-w-0">
-                              <span className="font-medium text-[#ECE6D6]">{item.title}: </span>
-                              <span className="text-[#8E8E8E]">{item.action}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                
                 </div>
               </div>
             ) : (

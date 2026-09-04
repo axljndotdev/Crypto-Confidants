@@ -13,7 +13,7 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter, content }) => {
   const eyebrow = content?.eyebrow || 'GLOBAL EDUCATION, A CONFIDENTIAL EAR';
   const headline = content?.headline || "Your wealth shouldn't depend on staying in a government's good graces.";
-  const subparagraph = content?.subparagraph || "Crypto Confidants helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.";
+  const subparagraph = content?.subparagraph || "Crypto Confidant helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.";
   const primaryCta = content?.primaryCta || 'Start a conversation';
   const secondaryCta = content?.secondaryCta || 'Read Newsletter';
   const pillar1 = content?.pillar1 || 'Access';

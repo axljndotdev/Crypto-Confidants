@@ -501,7 +501,7 @@ export const PdfDocumentViewer: React.FC<PdfDocumentViewerProps> = ({
         <div className="flex items-center gap-2">
           <span>HIGH-RESOLUTION VECTOR RENDER</span>
           <span>•</span>
-          <span>CRYPTO CONFIDANTS</span>
+          <span>CRYPTO CONFIDANT</span>
         </div>
       </div>
     </div>
