@@ -6,10 +6,12 @@ import {
   BadgeCheck,
   ShieldCheck,
 } from 'lucide-react';
+import { SiteContent } from '../types';
 
 interface PricingPageProps {
   onOpenConsultation?: () => void;
   onBackHome: () => void;
+  content?: SiteContent['pricing'];
 }
 
 type TierId = 'intro' | 'private' | 'engagement';
@@ -27,6 +29,7 @@ interface Tier {
 
 export const PricingPage: React.FC<PricingPageProps> = ({
   onBackHome,
+  content,
 }) => {
   const [selectedTier, setSelectedTier] =
     useState<TierId | null>(null);
@@ -40,40 +43,54 @@ export const PricingPage: React.FC<PricingPageProps> = ({
    */
   const [calInstanceKey, setCalInstanceKey] = useState(0);
 
+  const headerEyebrow = content?.headerEyebrow || 'PRIVATE ADVISORY';
+  const headerTitle = content?.headerTitle || 'Confidential Conversations';
+  const headerSubtitle = content?.headerSubtitle ||
+    `Every conversation is confidential and educational — a space to think clearly through your situation, priorities and options.
+
+Over decades, I have personally witnessed individuals and families be financially and politically devastated — losing their homes, incomes, and ability to provide for themselves. I have seen people left without the resources to defend their rights, protect those they love, or make meaningful choices about their future. And it is not getting better.
+
+You may be legally free to leave a hostile environment, but without access to portable money and assets you can move or protect, that freedom may be an illusion. Crypto can offer a conduit to greater asset access flexibility and sovereignty. Complacency quietly erodes the options you may one day depend on.
+
+If you are ready to get started, choose the introductory session below.`;
+
   const tiers: Tier[] = [
     {
       id: 'intro',
-      topLabel: '20 MINUTES',
-      name: 'Introductory Session',
-      price: 'US$75',
+      topLabel: content?.tier1TopLabel || '20 MINUTES',
+      name: content?.tier1Name || 'Introductory Session',
+      price: content?.tier1Price || 'US$75',
       description:
+        content?.tier1Description ||
         'A focused introductory conversation to clarify your situation, explore relevant options, and determine whether further advisory work would be helpful.',
       features: [],
-      buttonLabel: 'Book & Pay',
+      buttonLabel: content?.tier1ButtonLabel || 'Book & Pay',
       accent: true,
     },
     {
       id: 'private',
-      topLabel: '50 MINUTES',
-      name: 'Single Session',
-      price: 'US$450',
+      topLabel: content?.tier2TopLabel || '50 MINUTES',
+      name: content?.tier2Name || 'Single Session',
+      price: content?.tier2Price || 'US$450',
       description:
+        content?.tier2Description ||
         'A more detailed, confidential exploration of your situation, priorities, strategy, and positioning will be scheduled after the introductory session.',
       features: [],
-      buttonLabel: 'Introductory Session Required First',
+      buttonLabel: content?.tier2ButtonLabel || 'Introductory Session Required First',
       accent: false,
     },
     {
       id: 'engagement',
-      topLabel: '10 × 50 MINUTES',
-      name: 'Multiple Session',
-      price: 'US$4,000',
+      topLabel: content?.tier3TopLabel || '10 × 50 MINUTES',
+      name: content?.tier3Name || 'Multiple Session',
+      price: content?.tier3Price || 'US$4,000',
       description:
+        content?.tier3Description ||
         'An ongoing confidential conversation covering your situation, priorities, strategy, positioning, and execution.',
-      features: [
-        'Valid for 180 days from date of purchase.',
-      ],
-      buttonLabel: 'Introductory Session Required First',
+      features: content?.tier3Feature
+        ? [content.tier3Feature]
+        : ['Valid for 180 days from date of purchase.'],
+      buttonLabel: content?.tier3ButtonLabel || 'Introductory Session Required First',
       accent: false,
     },
   ];
@@ -130,41 +147,17 @@ export const PricingPage: React.FC<PricingPageProps> = ({
               <span className="w-8 sm:w-10 h-[1.5px] bg-theme-brass inline-block shrink-0" />
 
               <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
-                PRIVATE ADVISORY
+                {headerEyebrow}
               </span>
             </div>
 
             <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight text-theme-main leading-[1.05]">
-              Confidential Conversations
+              {headerTitle}
             </h1>
 
-            <p className="text-base sm:text-m text-theme-muted leading-relaxed max-w-none">
-              Every conversation is confidential and educational — a space to
-              think clearly through your situation, priorities and options.
-
-              <br />
-              <br />
-
-              Over decades, I have personally witnessed individuals and
-              families be financially and politically devastated — losing their
-              homes, incomes, and ability to provide for themselves. I have
-              seen people left without the resources to defend their rights,
-              protect those they love, or make meaningful choices about their
-              future. And it is not getting better.
-
-              <br />
-              <br />
-
-              You may be legally free to leave a hostile environment, but
-              without access to portable money and assets you can move or
-              protect, that freedom may be an illusion. Crypto can offer a conduit to greater asset access flexibility and sovereignty. Complacency quietly
-              erodes the options you may one day depend on.
-
-              <br />
-              <br />
-
-              If you are ready to get started, choose the introductory session below.
-            </p>
+            <div className="text-base sm:text-m text-theme-muted leading-relaxed max-w-none whitespace-pre-line">
+              {headerSubtitle}
+            </div>
 
           </div>
 

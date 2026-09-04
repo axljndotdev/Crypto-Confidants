@@ -1,5 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { NEWSLETTERS, Newsletter } from '../data/newsletters';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Newsletter } from '../data/newsletters';
+import { 
+  getStoredNewsletters, 
+  formatNewsletterDate, 
+  sortNewslettersLatestFirst 
+} from '../lib/contentStore';
+import { getPdfBlobUrl } from '../lib/pdfStorage';
 import { BrandMark } from './BrandMark';
 import {
   ArrowLeft,
@@ -10,6 +16,8 @@ import {
   ExternalLink,
   CheckCircle2,
   ChevronDown,
+  FileText,
+  Download,
 } from 'lucide-react';
 
 interface NewslettersPageProps {
@@ -23,53 +31,26 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
   initialNewsletterId,
   onOpenPricing,
 }) => {
-  /*
-   * Convert the newsletter date into ISO format.
-   */
-  const formatNewsletterDate = (date: string): string => {
-    const parsedDate = new Date(date);
+  const [allNewsletters, setAllNewsletters] = useState<Newsletter[]>(() => getStoredNewsletters());
 
-    if (Number.isNaN(parsedDate.getTime())) {
-      return date;
-    }
-
-    const year = parsedDate.getFullYear();
-    const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(parsedDate.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  };
-
-  /*
-   * Extract the numeric portion of the newsletter issue number.
-   */
-  const getIssueNumber = (issueNumber: string): number => {
-    const match = issueNumber.match(/\d+/);
-
-    return match ? parseInt(match[0], 10) : 0;
-  };
+  useEffect(() => {
+    const handleNewslettersUpdated = () => {
+      setAllNewsletters(getStoredNewsletters());
+    };
+    window.addEventListener('newsletters-updated', handleNewslettersUpdated);
+    return () => {
+      window.removeEventListener('newsletters-updated', handleNewslettersUpdated);
+    };
+  }, []);
 
   /*
    * Sort newsletters:
-   *
-   * 1. Newest date → oldest date
-   * 2. If multiple newsletters have the same date,
-   *    larger newsletter number → smaller newsletter number
+   * 1. Newest date → oldest date (newest on top)
+   * 2. If same date, larger issue number → smaller issue number
    */
-  const sortedNewsletters = [...NEWSLETTERS].sort((a, b) => {
-    const dateDifference =
-      new Date(b.date).getTime() -
-      new Date(a.date).getTime();
-
-    if (dateDifference !== 0) {
-      return dateDifference;
-    }
-
-    return (
-      getIssueNumber(b.issueNumber) -
-      getIssueNumber(a.issueNumber)
-    );
-  });
+  const sortedNewsletters = useMemo(() => {
+    return sortNewslettersLatestFirst(allNewsletters);
+  }, [allNewsletters]);
 
   const [selectedNewsletterId, setSelectedNewsletterId] =
     useState<string | null>(
@@ -150,6 +131,42 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
       (newsletter) =>
         newsletter.id === selectedNewsletterId
     ) || sortedNewsletters[0];
+
+  const [activePdfUrl, setActivePdfUrl] = useState<string | null>(null);
+  const [activePdfFileName, setActivePdfFileName] = useState<string | null>(null);
+  const [activePdfFileSize, setActivePdfFileSize] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    if (activeNewsletter) {
+      if (activeNewsletter.pdfUrl) {
+        setActivePdfUrl(activeNewsletter.pdfUrl);
+        setActivePdfFileName(activeNewsletter.pdfFileName || null);
+        setActivePdfFileSize(activeNewsletter.pdfFileSize || null);
+      } else {
+        getPdfBlobUrl(activeNewsletter.id).then((stored) => {
+          if (active) {
+            if (stored) {
+              setActivePdfUrl(stored.blobUrl);
+              setActivePdfFileName(stored.fileName);
+              setActivePdfFileSize(stored.fileSize);
+            } else {
+              setActivePdfUrl(null);
+              setActivePdfFileName(null);
+              setActivePdfFileSize(null);
+            }
+          }
+        });
+      }
+    } else {
+      setActivePdfUrl(null);
+      setActivePdfFileName(null);
+      setActivePdfFileSize(null);
+    }
+    return () => {
+      active = false;
+    };
+  }, [activeNewsletter?.id, activeNewsletter?.pdfUrl]);
 
   /*
    * Navigation follows the same sorted order.
@@ -488,9 +505,16 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                           )}
                         </span>
 
-                        <span className="text-theme-muted whitespace-nowrap">
-                          {newsletter.issueNumber}
-                        </span>
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                          {newsletter.pdfUrl && (
+                            <span className="text-[10px] font-mono text-theme-brass bg-theme-brass/10 border border-theme-brass/30 px-1.5 py-0.5 rounded font-semibold">
+                              PDF
+                            </span>
+                          )}
+                          <span className="text-theme-muted">
+                            {newsletter.issueNumber}
+                          </span>
+                        </div>
 
                       </div>
 
@@ -620,6 +644,28 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                   <p className="text-base sm:text-lg text-theme-muted font-sans italic leading-relaxed">
                     {activeNewsletter.subtitle}
                   </p>
+                )}
+
+                {activePdfUrl && (
+                  <div className="pt-2">
+                    <a
+                      id={`newsletter-pdf-download-btn-${activeNewsletter.id}`}
+                      href={activePdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={activePdfFileName || `${activeNewsletter.issueNumber.replace(/\s+/g, '_')}_Official_Edition.pdf`}
+                      className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-theme-brass/15 hover:bg-theme-brass/25 border border-theme-brass/40 text-theme-brass text-xs sm:text-sm font-medium transition-all shadow-xs group cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4 text-theme-brass shrink-0" />
+                      <span className="font-semibold">Download Official PDF Edition</span>
+                      {activePdfFileSize && (
+                        <span className="text-[11px] font-mono text-theme-muted uppercase tracking-wider">
+                          ({activePdfFileSize})
+                        </span>
+                      )}
+                      <Download className="w-3.5 h-3.5 ml-0.5 opacity-80 group-hover:translate-y-0.5 transition-transform" />
+                    </a>
+                  </div>
                 )}
 
               </div>

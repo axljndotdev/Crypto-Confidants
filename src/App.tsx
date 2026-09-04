@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ThemeMode } from './types';
+import { ThemeMode, AdminUser, SiteContent } from './types';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { WhyWeExistSection } from './components/WhyWeExistSection';
@@ -11,19 +11,66 @@ import { PricingPage } from './components/PricingPage';
 import { NewslettersPage } from './components/NewslettersPage';
 import { ConsultationModal } from './components/ConsultationModal';
 import { Footer } from './components/Footer';
+import { AdminLoginPage } from './components/admin/AdminLoginPage';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { getActiveSession, setActiveSession, getStoredSiteContent } from './lib/contentStore';
+
+function getInitialPage(): 'home' | 'pricing' | 'newsletters' | 'admin' | 'admin-login' {
+  if (typeof window === 'undefined') return 'home';
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+  const search = window.location.search.toLowerCase();
+  
+  const isAdmin = path.includes('admin') || hash.includes('admin') || search.includes('admin');
+  if (isAdmin) {
+    const session = getActiveSession();
+    return session ? 'admin' : 'admin-login';
+  }
+  return 'home';
+}
 
 export default function App() {
   const [theme, setTheme] = useState<ThemeMode>('dark');
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(getActiveSession());
+  const [siteContent, setSiteContent] = useState<SiteContent>(getStoredSiteContent());
   const [prefilledConsultationTopic, setPrefilledConsultationTopic] = useState('');
   const [auditScore, setAuditScore] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState('hero');
-  const [currentPage, setCurrentPage] = useState<'home' | 'pricing' | 'newsletters'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'pricing' | 'newsletters' | 'admin' | 'admin-login'>(getInitialPage);
 
-  // Apply data-theme attribute to <html>
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Global route checker for path, hash, and query changes
+  useEffect(() => {
+    const syncRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      const isAdmin = path.includes('admin') || hash.includes('admin') || search.includes('admin');
+
+      if (isAdmin) {
+        const session = getActiveSession();
+        if (session) {
+          setCurrentUser(session);
+          setCurrentPage('admin');
+        } else {
+          setCurrentUser(null);
+          setCurrentPage('admin-login');
+        }
+      }
+    };
+
+    syncRoute();
+    window.addEventListener('popstate', syncRoute);
+    window.addEventListener('hashchange', syncRoute);
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      window.removeEventListener('hashchange', syncRoute);
+    };
+  }, []);
 
   // Section observer for scroll highlights
   useEffect(() => {
@@ -72,9 +119,66 @@ export default function App() {
   };
 
   const handleBackHome = () => {
+    try {
+      window.history.pushState({}, '', '/');
+    } catch {
+      // Fallback
+    }
     setCurrentPage('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleAdminLoginSuccess = (user: AdminUser) => {
+    setCurrentUser(user);
+    try {
+      window.history.pushState({}, '', '/admin');
+    } catch {
+      // Fallback
+    }
+    setCurrentPage('admin');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAdminLogout = () => {
+    setActiveSession(null);
+    setCurrentUser(null);
+    try {
+      window.history.pushState({}, '', '/admin');
+    } catch {
+      // Fallback
+    }
+    setCurrentPage('admin-login');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Render Admin Login Page
+  if (currentPage === 'admin-login') {
+    return (
+      <AdminLoginPage
+        onLoginSuccess={handleAdminLoginSuccess}
+        onBackHome={handleBackHome}
+      />
+    );
+  }
+
+  // Render Admin Dashboard
+  if (currentPage === 'admin') {
+    if (currentUser) {
+      return (
+        <AdminDashboard
+          currentUser={currentUser}
+          onLogout={handleAdminLogout}
+          onViewLiveSite={handleBackHome}
+        />
+      );
+    }
+    return (
+      <AdminLoginPage
+        onLoginSuccess={handleAdminLoginSuccess}
+        onBackHome={handleBackHome}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-theme-main text-theme-main selection:bg-[#8A5A1E]/30 selection:text-theme-main transition-colors duration-300">
@@ -94,6 +198,7 @@ export default function App() {
         {currentPage === 'pricing' ? (
           <PricingPage
             onBackHome={handleBackHome}
+            content={siteContent.pricing}
           />
         ) : currentPage === 'newsletters' ? (
           <NewslettersPage
@@ -106,24 +211,28 @@ export default function App() {
             <Hero
               onOpenPricing={handleOpenPricing}
               onReadNewsletter={handleOpenNewsletters}
+              content={siteContent.hero}
             />
 
             {/* Page 2: Why We Exist */}
-            <WhyWeExistSection />
+            <WhyWeExistSection content={siteContent.whyWeExist} />
 
             {/* Page 3: Who We Help */}
             <WhoWeHelpSection
               onOpenConsultation={(topic) => handleOpenConsultation(topic)}
+              content={siteContent.whoWeHelp}
             />
 
             {/* Page 4: What We Offer */}
             <WhatWeOfferSection
               onOpenConsultation={(topic) => handleOpenConsultation(topic)}
+              content={siteContent.whatWeOffer}
             />
 
             {/* Pages 5 & 6: How We Communicate */}
             <HowWeCommunicateSection
               onOpenConsultation={() => handleOpenConsultation()}
+              content={siteContent.comms}
             />
 
             {/* Page 7: Start Here & Legal Disclaimer */}
@@ -131,6 +240,7 @@ export default function App() {
               onOpenConsultation={() => handleOpenConsultation()}
               onOpenPricing={handleOpenPricing}
               onBackToTop={handleBackToTop}
+              content={siteContent.startHere}
             />
           </>
         )}
@@ -152,7 +262,6 @@ export default function App() {
         prefilledTopic={prefilledConsultationTopic}
         auditScore={auditScore}
       />
-
     </div>
   );
 }
