@@ -33,6 +33,7 @@ import {
   sortNewslettersLatestFirst,
   getIssueNumberNumeric
 } from '../../lib/contentStore';
+import { publishSiteContentRemote, exportSiteContentAsFile, isRemotePublishConfigured } from '../../lib/publishClient';
 import { 
   savePdfToIndexedDb, 
   getPdfBlobUrl, 
@@ -252,6 +253,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     flashMessage('Site copy updated! Changes are live immediately.');
   };
 
+  const handlePublishRemote = async () => {
+    // Persist locally first
+    saveStoredSiteContent(siteContent);
+    flashMessage('Publishing to remote...');
+
+    if (!isRemotePublishConfigured()) {
+      flashMessage('No remote publish endpoint configured — exporting JSON instead.');
+      exportSiteContentAsFile(siteContent);
+      return;
+    }
+
+    const res = await publishSiteContentRemote(siteContent);
+    if (res.ok) {
+      flashMessage('Remote publish succeeded.');
+    } else {
+      console.error('Remote publish failed', res);
+      flashMessage(`Remote publish failed: ${res.error || res.status}`);
+    }
+  };
+
   const handleSaveNewsletter = () => {
     if (!editingIssue) return;
     
@@ -469,13 +490,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   Edit every text section across the website. Any changes published here update the live site immediately.
                 </p>
               </div>
-              <button
-                type="submit"
-                className="py-2.5 px-6 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-[#8A5A1E]/20 shrink-0"
-              >
-                <Save className="w-4 h-4" />
-                <span>Publish All Changes</span>
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="py-2.5 px-6 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-[#8A5A1E]/20 shrink-0"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Save Locally</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePublishRemote}
+                  className="py-2.5 px-5 rounded-xl border border-[#C4AC76]/20 bg-[#1D1B17] text-[#C4AC76] text-sm transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Publish Remotely / Export</span>
+                </button>
+              </div>
             </div>
 
             {/* SECTION 1: HERO */}

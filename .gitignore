@@ -1,4 +1,12 @@
 node_modules/
+dist/
+.env.local
+.env.*.local
+.DS_Store
+.vscode/
+coverage/
+.cache/
+node_modules/
 build/
 dist/
 coverage/

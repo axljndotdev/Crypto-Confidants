@@ -25,7 +25,7 @@ export const HowWeCommunicateSection: React.FC<HowWeCommunicateProps> = ({ conte
       num: '02',
       title: content?.step2Title || 'Set up Signal',
       description: content?.step2Description ||
-        `Signal is CryptoConfidant’s required communication channel for client conversations. Before your enquiry or Initial Introduction Session, please install the Signal app and create a Signal account. Signal requires a telephone number when registering an account. However, Signal’s username and phone-number privacy settings can allow you to contact CryptoConfidant.com without disclosing that number to us.`,
+        `Signal is CryptoConfidant’s required communication channel for client conversations. Before your enquiry or Initial Introduction Session, please install the Signal app and create a Signal account. Signal requires a telephone number when registering an account. Signal’s username and phone-number privacy settings can allow you to contact CryptoConfidant.com without disclosing that number to us.`,
     },
     {
       num: '03',
