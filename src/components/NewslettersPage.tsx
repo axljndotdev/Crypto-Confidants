@@ -11,9 +11,18 @@ import {
   getStoredNewsletters,
   formatNewsletterDate,
   sortNewslettersLatestFirst,
+  syncNewslettersWithFirebaseStorage,
+  saveSingleNewsletter,
 } from '../lib/contentStore';
 
-import { getPdfBlobUrl } from '../lib/pdfStorage';
+import {
+  getNewsletterPdf,
+  downloadNewsletterPdfFile,
+  savePdfToIndexedDb,
+  formatFileSize,
+} from '../lib/pdfStorage';
+
+import { uploadPdfToFirebaseStorage } from '../lib/firebase';
 
 import { BrandMark } from './BrandMark';
 
@@ -40,36 +49,23 @@ import {
   Maximize2,
   Loader2,
   RotateCcw,
+  Upload,
+  RefreshCw,
 } from 'lucide-react';
 
 /*
- * ============================================================
- * PDF.JS WORKER
- * ============================================================
- *
- * IMPORTANT:
- *
- * Do not use:
- *
- * new URL(
- *   'pdfjs-dist/build/pdf.worker.min.mjs',
- *   import.meta.url
- * )
- *
- * with every Vite/react-pdf setup. Depending on the installed
- * pdfjs-dist version, this can result in the worker failing to
- * load and PDF.js subsequently reporting a generic rendering
- * error.
- *
- * Using the worker from a CDN keeps the worker independent from
- * Vite's asset processing.
- *
- * The worker version MUST match the PDF.js version bundled with
- * react-pdf.
+ * PDF.js worker: bundle the worker with Vite so it always matches the
+ * installed pdfjs-dist version and does not depend on a CDN/CSP.
  */
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
-pdfjs.GlobalWorkerOptions.workerSrc =
-  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+const PDF_DOCUMENT_OPTIONS = {
+  disableAutoFetch: false,
+  disableStream: false,
+};
 
 
 /*
@@ -111,6 +107,14 @@ export const NewslettersPage: React.FC<
     );
 
   useEffect(() => {
+    syncNewslettersWithFirebaseStorage().then((synced) => {
+      if (synced && synced.length > 0) {
+        setAllNewsletters(synced);
+      }
+    }).catch((err) => {
+      console.warn('Storage sync notice on mount:', err);
+    });
+
     const handleNewslettersUpdated = () => {
       setAllNewsletters(
         getStoredNewsletters()
@@ -236,6 +240,12 @@ export const NewslettersPage: React.FC<
   const [pdfErrorMessage, setPdfErrorMessage] =
     useState<string | null>(null);
 
+  const [pdfSourceKind, setPdfSourceKind] =
+    useState<'stored' | 'local' | null>(null);
+
+  const localPdfUrlRef =
+    useRef<string | null>(null);
+
   const [numPages, setNumPages] =
     useState<number | null>(null);
 
@@ -244,6 +254,24 @@ export const NewslettersPage: React.FC<
 
   const [pdfScale, setPdfScale] =
     useState(1);
+
+  useEffect(() => {
+    return () => {
+      if (localPdfUrlRef.current) {
+        URL.revokeObjectURL(localPdfUrlRef.current);
+        localPdfUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  const pdfFileInputRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const [isSyncingStorage, setIsSyncingStorage] =
+    useState(false);
+
+  const [uploadStatusMsg, setUploadStatusMsg] =
+    useState<string | null>(null);
 
 
   /*
@@ -313,6 +341,7 @@ export const NewslettersPage: React.FC<
     setPdfLoadError(false);
     setPdfViewerFallback(false);
     setPdfErrorMessage(null);
+    setPdfSourceKind(null);
   }, [activeNewsletter?.id]);
 
 
@@ -322,19 +351,24 @@ export const NewslettersPage: React.FC<
    * ==========================================================
    */
 
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
 
     const loadPdf = async () => {
-
       setPdfLoading(true);
       setPdfLoadError(false);
+      setPdfViewerFallback(false);
       setPdfErrorMessage(null);
-
+      setPdfSourceKind(null);
+      if (localPdfUrlRef.current) {
+        URL.revokeObjectURL(localPdfUrlRef.current);
+        localPdfUrlRef.current = null;
+      }
       setActivePdfUrl(null);
       setActivePdfFileName(null);
       setActivePdfFileSize(null);
-
       setNumPages(null);
       setPdfPage(1);
       setPdfScale(1);
@@ -344,125 +378,47 @@ export const NewslettersPage: React.FC<
         return;
       }
 
-
-      /*
-       * ------------------------------------------------------
-       * DIRECT PDF URL
-       * ------------------------------------------------------
-       */
-
-      if (activeNewsletter.pdfUrl) {
-
-        if (cancelled) return;
-
-        setActivePdfUrl(
-          activeNewsletter.pdfUrl
-        );
-
-        setActivePdfFileName(
-          activeNewsletter.pdfFileName ||
-            null
-        );
-
-        setActivePdfFileSize(
-          activeNewsletter.pdfFileSize ||
-            null
-        );
-
-        /*
-         * Do NOT consider the PDF loaded yet.
-         *
-         * PDF.js still needs to load and parse it.
-         */
-
-        setPdfLoading(true);
-
-        return;
-      }
-
-
-      /*
-       * ------------------------------------------------------
-       * STORAGE PDF
-       * ------------------------------------------------------
-       */
-
       try {
+        const result = await getNewsletterPdf(activeNewsletter);
+        if (cancelled) return;
 
-        const stored =
-          await getPdfBlobUrl(
-            activeNewsletter.id
+        if (result?.url) {
+          setActivePdfUrl(result.url);
+          setActivePdfFileName(result.fileName ?? null);
+          setActivePdfFileSize(result.fileSize ?? null);
+          setPdfSourceKind(
+            result.url.startsWith('blob:') ? 'local' : 'stored'
           );
-
-        if (cancelled) return;
-
-        if (!stored) {
-
-          setActivePdfUrl(null);
-          setActivePdfFileName(null);
-          setActivePdfFileSize(null);
-
+          // Keep the loading overlay until PDF.js fires onLoadSuccess.
+          setPdfLoading(true);
+        } else {
           setPdfLoading(false);
-
-          return;
         }
-
-
-        setActivePdfUrl(
-          stored.blobUrl
-        );
-
-        setActivePdfFileName(
-          stored.fileName ||
-            null
-        );
-
-        setActivePdfFileSize(
-          stored.fileSize ||
-            null
-        );
-
-        /*
-         * Keep loading true until PDF.js confirms
-         * that the document has actually loaded.
-         */
-
-        setPdfLoading(true);
-
       } catch (error) {
-
-        console.error(
-          'Failed to retrieve newsletter PDF:',
-          error
-        );
-
         if (cancelled) return;
-
-        setActivePdfUrl(null);
-        setActivePdfFileName(null);
-        setActivePdfFileSize(null);
-
-        setPdfLoadError(true);
-
-        setPdfErrorMessage(
-          'The PDF file could not be retrieved.'
-        );
-
+        console.warn('Failed to retrieve newsletter PDF:', error);
         setPdfLoading(false);
+        setPdfLoadError(true);
+        setPdfViewerFallback(false);
+        setPdfErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'The PDF file could not be retrieved.'
+        );
       }
     };
 
-    loadPdf();
+    void loadPdf();
 
     return () => {
       cancelled = true;
     };
-
   }, [
     activeNewsletter?.id,
     activeNewsletter?.pdfUrl,
+    activeNewsletter?.date,
+    activeNewsletter?.title,
   ]);
-
 
   /*
    * ==========================================================
@@ -500,25 +456,24 @@ export const NewslettersPage: React.FC<
    * ==========================================================
    */
 
-  const handlePdfLoadError = (
-    error: Error
-  ) => {
-
-    console.error(
-      'PDF.js rendering error:',
-      error
+  const handlePdfLoadError = (error: Error) => {
+    console.warn(
+      'PDF.js render error:',
+      error?.message || error
     );
 
+    // Do not generate or synthesize a replacement PDF here. The page should
+    // render the actual edition retrieved from Firebase Storage (or a PDF
+    // explicitly selected by the user). If PDF.js cannot render it, fall back
+    // to the browser's native PDF viewer instead of creating another document.
     setPdfLoading(false);
     setPdfLoadError(true);
     setPdfViewerFallback(true);
-
     setPdfErrorMessage(
       error?.message ||
-        'The PDF could not be rendered by the embedded viewer. The file will still open in a new tab.'
+        'The official PDF could not be rendered in the embedded viewer. Use Open PDF to view the original file.'
     );
   };
-
 
   /*
    * ==========================================================
@@ -591,6 +546,37 @@ export const NewslettersPage: React.FC<
     );
   };
 
+  /*
+   * ==========================================================
+   * DOWNLOAD PDF
+   * ==========================================================
+   */
+
+  const handleDownloadPdf = async () => {
+    if (!activePdfUrl || !activeNewsletter) return;
+
+    setIsDownloadingPdf(true);
+    try {
+      const fileName =
+        activePdfFileName ||
+        `${activeNewsletter.issueNumber.replace(/\s+/g, '_')}_Official_Edition.pdf`;
+      await downloadNewsletterPdfFile(activePdfUrl, fileName);
+    } catch (err) {
+      console.error('Failed to download PDF:', err);
+      // Direct anchor click fallback
+      const link = document.createElement('a');
+      link.href = activePdfUrl;
+      link.download =
+        activePdfFileName ||
+        `${activeNewsletter.issueNumber.replace(/\s+/g, '_')}_Official_Edition.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
 
   /*
    * ==========================================================
@@ -598,14 +584,8 @@ export const NewslettersPage: React.FC<
    * ==========================================================
    */
 
-  const handleRetryPdf = () => {
-
+  const handleRetryPdf = async () => {
     if (!activeNewsletter) return;
-
-    /*
-     * Force the effect to reload by briefly clearing
-     * the current PDF state.
-     */
 
     setPdfLoadError(false);
     setPdfViewerFallback(false);
@@ -614,74 +594,115 @@ export const NewslettersPage: React.FC<
     setNumPages(null);
     setPdfPage(1);
 
-    setActivePdfUrl(null);
+    try {
+      const result = await getNewsletterPdf(activeNewsletter);
 
-    /*
-     * The following timeout changes the state after the
-     * current render so the PDF can be loaded again.
-     */
-
-    window.setTimeout(() => {
-
-      if (
-        activeNewsletter.pdfUrl
-      ) {
-
-        setActivePdfUrl(
-          activeNewsletter.pdfUrl
+      if (result?.url) {
+        setActivePdfUrl(result.url);
+        setActivePdfFileName(result.fileName ?? null);
+        setActivePdfFileSize(result.fileSize ?? null);
+        setPdfSourceKind(
+          result.url.startsWith('blob:') ? 'local' : 'stored'
         );
-
       } else {
-
-        getPdfBlobUrl(
-          activeNewsletter.id
-        )
-          .then((stored) => {
-
-            if (!stored) {
-
-              setPdfLoading(false);
-              setPdfLoadError(true);
-              setPdfErrorMessage(
-                'The PDF file could not be retrieved.'
-              );
-
-              return;
-            }
-
-            setActivePdfUrl(
-              stored.blobUrl
-            );
-
-            setActivePdfFileName(
-              stored.fileName ||
-                null
-            );
-
-            setActivePdfFileSize(
-              stored.fileSize ||
-                null
-            );
-
-          })
-          .catch((error) => {
-
-            console.error(
-              'PDF retry failed:',
-              error
-            );
-
-            setPdfLoading(false);
-            setPdfLoadError(true);
-            setPdfErrorMessage(
-              error?.message ||
-                'The PDF could not be loaded.'
-            );
-
-          });
+        setPdfLoading(false);
+        setPdfLoadError(true);
+        setPdfViewerFallback(false);
+        setPdfErrorMessage('The PDF file could not be retrieved.');
       }
+    } catch (error) {
+      console.error('PDF retry failed:', error);
+      setPdfLoading(false);
+      setPdfLoadError(true);
+      setPdfViewerFallback(false);
+      setPdfErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'The PDF could not be loaded.'
+      );
+    }
+  };
 
-    }, 50);
+  /*
+   * ==========================================================
+   * MANUAL STORAGE SYNC
+   * ==========================================================
+   */
+
+  const handleSyncStorageNow = async () => {
+    setIsSyncingStorage(true);
+    try {
+      const synced = await syncNewslettersWithFirebaseStorage();
+      if (synced && synced.length > 0) {
+        setAllNewsletters(synced);
+        setUploadStatusMsg(`Synced ${synced.length} newsletter(s) from Firebase Storage.`);
+      } else {
+        setUploadStatusMsg('Storage checked: No new PDF files found.');
+      }
+      setTimeout(() => setUploadStatusMsg(null), 4000);
+    } catch (err) {
+      console.warn('Storage sync error:', err);
+    } finally {
+      setIsSyncingStorage(false);
+    }
+  };
+
+  /*
+   * ==========================================================
+   * DIRECT PDF FILE UPLOAD / ATTACH
+   * ==========================================================
+   */
+
+  const handleDirectPdfFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeNewsletter) return;
+
+    try {
+      const localBlobUrl = URL.createObjectURL(file);
+      if (localPdfUrlRef.current) {
+        URL.revokeObjectURL(localPdfUrlRef.current);
+      }
+      localPdfUrlRef.current = localBlobUrl;
+      setActivePdfUrl(localBlobUrl);
+      setPdfSourceKind('local');
+      setActivePdfFileName(file.name);
+      setActivePdfFileSize(formatFileSize(file.size));
+      setPdfLoading(true);
+      setPdfLoadError(false);
+      setPdfViewerFallback(false);
+
+      await savePdfToIndexedDb(activeNewsletter.id, file);
+
+      try {
+        const uploadResult = await uploadPdfToFirebaseStorage(activeNewsletter.id, file);
+        const updated: Newsletter = {
+          ...activeNewsletter,
+          title: file.name.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' '),
+          pdfUrl: uploadResult.downloadUrl,
+          pdfFileName: file.name,
+          pdfFileSize: formatFileSize(file.size),
+        };
+        await saveSingleNewsletter(updated);
+        setAllNewsletters(getStoredNewsletters());
+        setUploadStatusMsg('✓ PDF uploaded to Firebase Storage and loaded into reader.');
+      } catch (uploadErr) {
+        console.warn('Firebase Storage direct upload notice:', uploadErr);
+        const updated: Newsletter = {
+          ...activeNewsletter,
+          title: file.name.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' '),
+          pdfUrl: localBlobUrl,
+          pdfFileName: file.name,
+          pdfFileSize: formatFileSize(file.size),
+        };
+        await saveSingleNewsletter(updated);
+        setAllNewsletters(getStoredNewsletters());
+        setUploadStatusMsg('✓ PDF loaded into reader and saved locally.');
+      }
+      setTimeout(() => setUploadStatusMsg(null), 4500);
+      e.target.value = '';
+    } catch (err) {
+      console.error('Failed to load PDF file:', err);
+    }
   };
 
 
@@ -1496,103 +1517,7 @@ export const NewslettersPage: React.FC<
 
 
             {/* =================================================
-                HEADER
-            ================================================= */}
-
-            <div className="
-              bg-[#0D0C0A]
-              text-[#E8E4D9]
-              px-4
-              py-7
-              sm:px-8
-              sm:py-9
-              lg:p-10
-              border-b
-              border-[#3A3326]
-              relative
-              text-center
-              space-y-4
-            ">
-
-              <div className="
-                inline-flex
-                items-center
-                justify-center
-                p-2.5
-                sm:p-3
-                rounded-xl
-                bg-[#1A1814]
-                border
-                border-[#3A3326]
-              ">
-
-                <BrandMark
-                  size={34}
-                  variant="brass"
-                />
-
-              </div>
-
-              <h1 className="
-                font-serif
-                text-2xl
-                sm:text-3xl
-                lg:text-4xl
-                text-[#FAF8F5]
-                tracking-tight
-                font-normal
-                break-words
-              ">
-                CryptoConfidant.com
-              </h1>
-
-              <p className="
-                text-sm
-                sm:text-base
-                leading-relaxed
-                font-sans
-                text-[#C5C0B6]
-                tracking-wide
-                max-w-lg
-                mx-auto
-              ">
-                Confidential conversations and
-                education on wealth sovereignty
-                and crypto options.
-              </p>
-
-              <div className="
-                pt-4
-                mt-1
-                flex
-                items-center
-                justify-between
-                gap-4
-                border-t
-                border-[#2A261F]
-                text-xs
-                sm:text-sm
-                font-medium
-                text-[#D4C5A9]
-              ">
-
-                <span className="font-bold tracking-wide">
-                  {formatNewsletterDate(
-                    activeNewsletter.date
-                  )}
-                </span>
-
-                <span>
-                  {activeNewsletter.issueNumber}
-                </span>
-
-              </div>
-
-            </div>
-
-
-            {/* =================================================
-                BODY
+                ARTICLE BODY
             ================================================= */}
 
             <div className="
@@ -1782,11 +1707,23 @@ export const NewslettersPage: React.FC<
 
                       <div className="
                         flex
+                        flex-wrap
                         items-center
                         gap-2
                         w-full
                         sm:w-auto
                       ">
+
+                        {/* Hidden native PDF file input */}
+                        <input
+                          ref={pdfFileInputRef}
+                          type="file"
+                          accept="application/pdf"
+                          onChange={handleDirectPdfFileChange}
+                          className="hidden"
+                          aria-label="Upload PDF file"
+                        />
+
 
                         <button
                           type="button"
@@ -1795,8 +1732,6 @@ export const NewslettersPage: React.FC<
                           }
                           className="
                             min-h-[42px]
-                            flex-1
-                            sm:flex-none
                             inline-flex
                             items-center
                             justify-center
@@ -1823,19 +1758,12 @@ export const NewslettersPage: React.FC<
                         </button>
 
 
-                        <a
-                          href={activePdfUrl}
-                          download={
-                            activePdfFileName ||
-                            `${activeNewsletter.issueNumber.replace(
-                              /\s+/g,
-                              '_'
-                            )}_Official_Edition.pdf`
-                          }
+                        <button
+                          type="button"
+                          disabled={isDownloadingPdf}
+                          onClick={handleDownloadPdf}
                           className="
                             min-h-[42px]
-                            flex-1
-                            sm:flex-none
                             inline-flex
                             items-center
                             justify-center
@@ -1850,18 +1778,29 @@ export const NewslettersPage: React.FC<
                             font-semibold
                             transition-opacity
                             cursor-pointer
+                            disabled:opacity-60
                           "
                         >
+                          {isDownloadingPdf ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
 
-                          <Download className="w-4 h-4" />
+                          <span>{isDownloadingPdf ? 'Downloading…' : 'Download'}</span>
 
-                          Download
-
-                        </a>
+                        </button>
 
                       </div>
 
                     </div>
+
+                    {uploadStatusMsg && (
+                      <div className="mt-2.5 px-3 py-1.5 rounded-lg bg-[#2A2418] border border-theme-brass/30 text-xs text-theme-brass flex items-center justify-between">
+                        <span>{uploadStatusMsg}</span>
+                        <button onClick={() => setUploadStatusMsg(null)} className="text-xs text-[#8E8E8E] hover:text-white ml-2">✕</button>
+                      </div>
+                    )}
 
                   </div>
 
@@ -2296,10 +2235,8 @@ export const NewslettersPage: React.FC<
                       !pdfViewerFallback && (
 
                         <Document
-                          key={activePdfUrl}
-                          file={{
-                            url: activePdfUrl,
-                          }}
+                          key={`${activeNewsletter.id}:${activePdfUrl}`}
+                          file={{ url: activePdfUrl }}
                           onLoadSuccess={
                             handlePdfLoadSuccess
                           }
@@ -2313,34 +2250,30 @@ export const NewslettersPage: React.FC<
                             justify-center
                             items-start
                           "
-                          options={{
-                            disableAutoFetch: false,
-                            disableStream: false,
-                          }}
+                          options={PDF_DOCUMENT_OPTIONS}
                         >
 
                           {viewerWidth > 0 && (
-
-                            <Page
-                              key={`${activePdfUrl}-${pdfPage}-${pdfScale}`}
-                              pageNumber={
-                                pdfPage
-                              }
-                              width={
-                                pdfPageWidth
-                              }
-                              renderTextLayer={
-                                true
-                              }
-                              renderAnnotationLayer={
-                                true
-                              }
-                              className="
-                                shadow-2xl
-                                bg-white
-                              "
-                            />
-
+                            <div>
+                              <Page
+                                pageNumber={
+                                  pdfPage
+                                }
+                                width={
+                                  pdfPageWidth
+                                }
+                                renderTextLayer={
+                                  true
+                                }
+                                renderAnnotationLayer={
+                                  true
+                                }
+                                className="
+                                  shadow-2xl
+                                  bg-white
+                                "
+                              />
+                            </div>
                           )}
 
                         </Document>
@@ -3148,96 +3081,6 @@ export const NewslettersPage: React.FC<
                   SOURCES
               ================================================= */}
 
-              {activeNewsletter.sources &&
-                activeNewsletter.sources.length >
-                  0 && (
-
-                  <div className="
-                    bg-theme-surface-hover
-                    border
-                    border-theme
-                    rounded-xl
-                    p-4
-                    sm:p-5
-                    space-y-4
-                  ">
-
-                    <div className="
-                      text-xs
-                      sm:text-sm
-                      uppercase
-                      tracking-wide
-                      text-theme-brass
-                      font-semibold
-                    ">
-                      Sources &
-                      Documentation
-                    </div>
-
-
-                    <ul className="
-                      space-y-4
-                      text-sm
-                      sm:text-base
-                      text-theme-muted
-                    ">
-
-                      {activeNewsletter.sources.map(
-                        (
-                          source,
-                          index
-                        ) => (
-
-                          <li
-                            key={index}
-                            className="
-                              flex
-                              items-start
-                              gap-3
-                            "
-                          >
-
-                            <ExternalLink className="
-                              w-4
-                              h-4
-                              text-theme-brass
-                              shrink-0
-                              mt-1
-                            " />
-
-                            <div className="
-                              min-w-0
-                              leading-[1.7]
-                              break-words
-                            ">
-
-                              <strong className="
-                                text-theme-main
-                                font-semibold
-                              ">
-                                {
-                                  source.name
-                                }:{' '}
-                              </strong>
-
-                              <span>
-                                {
-                                  source.details
-                                }
-                              </span>
-
-                            </div>
-
-                          </li>
-
-                        )
-                      )}
-
-                    </ul>
-
-                  </div>
-
-                )}
 
 
               {/* =================================================

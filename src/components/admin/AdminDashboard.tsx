@@ -16,7 +16,8 @@ import {
   Download,
   Eye,
   Paperclip,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import { AdminUser, SiteContent } from '../../types';
 import { Newsletter } from '../../data/newsletters';
@@ -31,14 +32,21 @@ import {
   saveStoredAdminUsers,
   formatNewsletterDate,
   sortNewslettersLatestFirst,
-  getIssueNumberNumeric
+  getIssueNumberNumeric,
+  syncNewslettersWithFirebaseStorage
 } from '../../lib/contentStore';
 import { 
   savePdfToIndexedDb, 
   getPdfBlobUrl, 
   deletePdfFromIndexedDb, 
-  formatFileSize 
+  formatFileSize,
+  downloadNewsletterPdfFile
 } from '../../lib/pdfStorage';
+import { 
+  uploadPdfToFirebaseStorage, 
+  deletePdfFromFirebaseStorage,
+  resolveFirebaseStorageUrl 
+} from '../../lib/firebase';
 
 interface AdminDashboardProps {
   currentUser: AdminUser;
@@ -69,6 +77,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const pdfFileInputRef = useRef<HTMLInputElement | null>(null);
   const [isDraggingPdf, setIsDraggingPdf] = useState(false);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [pdfStorageStatus, setPdfStorageStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [pdfStorageErrorMsg, setPdfStorageErrorMsg] = useState<string | null>(null);
 
   const flashMessage = (msg: string) => {
     setSaveSuccessMsg(msg);
@@ -78,6 +88,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleStartEditIssue = async (issue: Newsletter) => {
     setEditingIssue(issue);
     setIsCreatingNew(false);
+    setPdfStorageStatus('idle');
+    setPdfStorageErrorMsg(null);
     if (!issue.pdfUrl) {
       const storedPdf = await getPdfBlobUrl(issue.id);
       if (storedPdf) {
@@ -86,6 +98,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           pdfUrl: storedPdf.blobUrl,
           pdfFileName: storedPdf.fileName,
           pdfFileSize: storedPdf.fileSize,
+        } : prev);
+      }
+    } else if (issue.pdfUrl.startsWith('gs://') || (!issue.pdfUrl.startsWith('http') && !issue.pdfUrl.startsWith('blob:'))) {
+      const resolved = await resolveFirebaseStorageUrl(issue.pdfUrl);
+      if (resolved) {
+        setEditingIssue((prev) => prev && prev.id === issue.id ? {
+          ...prev,
+          pdfUrl: resolved,
         } : prev);
       }
     }
@@ -98,16 +118,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       return;
     }
     setIsUploadingPdf(true);
+    setPdfStorageStatus('idle');
+    setPdfStorageErrorMsg(null);
+
     try {
-      const saved = await savePdfToIndexedDb(editingIssue.id, file);
+      // 1. Upload directly to Firebase Storage bucket (gs://crypto-confidant-2026.firebasestorage.app/newsletters)
+      let permanentUrl: string | null = null;
+      let uploadException: any = null;
+
+      try {
+        const uploaded = await uploadPdfToFirebaseStorage(editingIssue.id, file);
+        permanentUrl = uploaded.downloadUrl;
+        setPdfStorageStatus('success');
+      } catch (storageErr: any) {
+        uploadException = storageErr;
+        console.error('Firebase Storage upload failed:', storageErr);
+      }
+
+      // 2. Cache locally in IndexedDB as immediate backup
+      const savedLocal = await savePdfToIndexedDb(editingIssue.id, file);
+      const activeUrl = permanentUrl || savedLocal.blobUrl;
+      const fileSize = formatFileSize(file.size);
+
       setEditingIssue({
         ...editingIssue,
-        pdfUrl: saved.blobUrl,
-        pdfFileName: saved.fileName,
-        pdfFileSize: saved.fileSize,
+        pdfUrl: activeUrl,
+        pdfFileName: file.name,
+        pdfFileSize: fileSize,
       });
-      flashMessage(`PDF attached: ${saved.fileName} (${saved.fileSize})`);
-    } catch (err) {
+
+      if (permanentUrl) {
+        flashMessage(`✓ PDF uploaded to Firebase Storage: ${file.name} (${fileSize})`);
+      } else {
+        setPdfStorageStatus('error');
+        const errDetail = uploadException?.message || uploadException?.code || 'Upload request was denied';
+        setPdfStorageErrorMsg(errDetail);
+        flashMessage(`⚠️ PDF attached locally (Firebase Storage upload notice: ${errDetail})`);
+      }
+    } catch (err: any) {
       console.error('Error saving PDF:', err);
       const fallbackUrl = URL.createObjectURL(file);
       const fallbackSize = formatFileSize(file.size);
@@ -117,6 +165,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         pdfFileName: file.name,
         pdfFileSize: fallbackSize,
       });
+      setPdfStorageStatus('error');
+      setPdfStorageErrorMsg(err?.message || 'Unexpected upload error');
       flashMessage(`PDF attached: ${file.name}`);
     } finally {
       setIsUploadingPdf(false);
@@ -162,6 +212,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const normalizedIssue: Newsletter = {
       ...editingIssue,
       date: formattedDate,
+      // Do not store session-scoped blob URLs in persistent store; IndexedDB retains the blob
+      pdfUrl: editingIssue.pdfUrl?.startsWith('blob:') ? undefined : editingIssue.pdfUrl,
     };
 
     await saveSingleNewsletter(normalizedIssue);
@@ -1506,23 +1558,56 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                   {/* Newsletter PDF Edition Upload & Attachment */}
                   <div className="p-5 rounded-2xl bg-[#181613] border border-[#C4AC76]/30 space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <Paperclip className="w-4 h-4 text-[#C4AC76]" />
                         <span className="text-xs font-mono uppercase tracking-wider text-[#C4AC76] font-semibold">
-                          Newsletter PDF Edition (Downloadable PDF)
+                          Newsletter PDF Edition
                         </span>
                       </div>
-                      {editingIssue.pdfUrl && (
-                        <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-500/30">
-                          PDF Attached
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#C4AC76]/10 text-[#C4AC76] border border-[#C4AC76]/25">
+                          Bucket: gs://crypto-confidant-2026.firebasestorage.app/newsletters
                         </span>
-                      )}
+                        {editingIssue.pdfUrl && (
+                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                            pdfStorageStatus === 'success' || (editingIssue.pdfUrl.includes('firebasestorage') || editingIssue.pdfUrl.startsWith('gs://'))
+                              ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
+                              : 'bg-amber-950/40 text-amber-300 border-amber-500/30'
+                          }`}>
+                            {pdfStorageStatus === 'success' || (editingIssue.pdfUrl.includes('firebasestorage') || editingIssue.pdfUrl.startsWith('gs://'))
+                              ? '✓ Synced to Firebase Storage'
+                              : 'Attached (Local/Direct)'}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-xs text-[#8E8E8E] leading-relaxed">
-                      Upload the official PDF version of this newsletter. Readers will be able to read and download the PDF edition directly from the newsletter page.
+                      Upload or link the official PDF edition for this newsletter. Uploads are stored persistently in Firebase Storage (<span className="font-mono text-[#C4AC76]">gs://crypto-confidant-2026.firebasestorage.app/newsletters</span>) and made available for instant preview and download.
                     </p>
+
+                    {pdfStorageErrorMsg && (
+                      <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-500/30 text-xs text-amber-200 space-y-2">
+                        <div className="flex items-center gap-2 font-semibold">
+                          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                          <span>Firebase Storage upload was rejected by your bucket security rules.</span>
+                        </div>
+                        <p className="text-[11px] text-amber-300/80 leading-relaxed">
+                          To enable direct file uploads to your Firebase Storage bucket, open your <strong>Firebase Console &gt; Storage &gt; Rules</strong> and ensure your rules allow read and write access:
+                        </p>
+                        <pre className="p-2 rounded bg-black/40 border border-amber-500/20 text-[10px] font-mono text-amber-100 overflow-x-auto">
+{`rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /newsletters/{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}`}
+                        </pre>
+                      </div>
+                    )}
 
                     {/* Attached PDF Card or Upload Dropzone */}
                     {editingIssue.pdfUrl ? (
@@ -1538,7 +1623,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="text-[11px] font-mono text-[#8E8E8E] flex items-center gap-2 mt-0.5">
                               <span>{editingIssue.pdfFileSize || 'PDF Document'}</span>
                               <span>•</span>
-                              <span className="text-emerald-400">Available for public download</span>
+                              <span className="text-emerald-400">Available for public preview & download</span>
                             </div>
                           </div>
                         </div>
@@ -1551,8 +1636,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             className="px-3 py-1.5 rounded-lg bg-[#1D1B17] hover:bg-[#8A5A1E]/20 border border-[#C4AC76]/30 text-xs text-[#C4AC76] flex items-center gap-1.5 transition-colors cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            <span>Preview PDF</span>
+                            <span>Preview</span>
                           </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editingIssue.pdfUrl) {
+                                downloadNewsletterPdfFile(
+                                  editingIssue.pdfUrl,
+                                  editingIssue.pdfFileName || `${editingIssue.issueNumber}_Official_Edition.pdf`
+                                );
+                              }
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-[#1D1B17] hover:bg-[#C4AC76]/15 border border-[#C4AC76]/20 text-xs text-[#C4AC76] flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download</span>
+                          </button>
                           <button
                             type="button"
                             onClick={() => pdfFileInputRef.current?.click()}
@@ -1593,7 +1693,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {isUploadingPdf ? (
                           <div className="flex flex-col items-center justify-center py-2">
                             <Loader2 className="w-7 h-7 text-[#C4AC76] animate-spin mb-2" />
-                            <span className="text-xs font-mono text-[#C4AC76]">Processing PDF upload...</span>
+                            <span className="text-xs font-mono text-[#C4AC76]">Uploading PDF to Firebase Storage...</span>
                           </div>
                         ) : (
                           <>
@@ -1604,7 +1704,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               Click to browse or drag and drop newsletter PDF here
                             </div>
                             <div className="text-xs text-[#8E8E8E] mt-1">
-                              Supports standard PDF files up to 50MB
+                              Automatically uploads to Firebase Storage (gs://crypto-confidant-2026.firebasestorage.app/newsletters)
                             </div>
                           </>
                         )}
@@ -1621,14 +1721,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       onChange={handlePdfFileChange}
                     />
 
-                    {/* External PDF URL input */}
+                    {/* Firebase Storage path or External PDF URL input */}
                     <div className="pt-1">
                       <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">
-                        Or enter hosted PDF URL (IPFS, CDN, S3, or Google Drive)
+                        Or enter Firebase Storage path (e.g. gs://crypto-confidant-2026.firebasestorage.app/newsletters/issue_01.pdf or https://...)
                       </label>
                       <input
                         id="newsletter-pdf-url-input"
-                        type="url"
+                        type="text"
                         value={editingIssue.pdfUrl || ''}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1636,10 +1736,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             ...editingIssue,
                             pdfUrl: val,
                             pdfFileName: val ? val.split('/').pop()?.split('?')[0] || 'newsletter.pdf' : undefined,
-                            pdfFileSize: val ? 'External PDF' : undefined,
+                            pdfFileSize: val ? (val.startsWith('gs://') ? 'Firebase Storage' : 'Hosted PDF') : undefined,
                           });
                         }}
-                        placeholder="https://example.com/newsletter-01.pdf"
+                        placeholder="gs://crypto-confidant-2026.firebasestorage.app/newsletters/issue_01.pdf"
                         className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-xs text-[#ECE6D6] font-mono placeholder-[#6B6252] focus:outline-none focus:border-[#C4AC76]"
                       />
                     </div>
@@ -1680,18 +1780,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-serif text-[#ECE6D6]">Newsletter Manager</h2>
-                    <p className="text-xs text-[#8E8E8E] mt-1">Upload and edit newsletter issues.</p>
+                    <p className="text-xs text-[#8E8E8E] mt-1">
+                      Directly connected to Firebase Storage (<code className="text-[#C4AC76]">gs://crypto-confidant-2026.firebasestorage.app</code>).
+                    </p>
                   </div>
-                  <button
-                    onClick={handleStartNewNewsletter}
-                    className="py-2.5 px-6 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-[#8A5A1E]/20"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>New Newsletter</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const synced = await syncNewslettersWithFirebaseStorage();
+                        if (synced && synced.length > 0) {
+                          setNewsletters(synced);
+                          flashMessage(`Synced ${synced.length} newsletter(s) from Firebase Storage.`);
+                        } else {
+                          flashMessage('Storage scanned. No new files found in bucket.');
+                        }
+                      }}
+                      className="py-2 px-4 rounded-xl bg-[#1D1B17] hover:bg-[#C4AC76]/10 border border-[#C4AC76]/30 text-xs text-[#C4AC76] font-mono flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Sync with Storage</span>
+                    </button>
+                    <button
+                      onClick={handleStartNewNewsletter}
+                      className="py-2.5 px-6 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-[#8A5A1E]/20"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>New Newsletter</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">

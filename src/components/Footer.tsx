@@ -84,7 +84,7 @@ export const Footer: React.FC<FooterProps> = ({
                     onClick={onOpenPricing}
                     className="hover:text-theme-main transition-colors text-left cursor-pointer"
                   >
-                    Pricing
+                    Advisory Fees
                   </button>
                 </li>
               )}

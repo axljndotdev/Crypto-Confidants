@@ -1,6 +1,7 @@
 import { SiteContent, AdminUser } from '../types';
 import { NEWSLETTERS, Newsletter } from '../data/newsletters';
-import { db } from './firebase';
+import { db, listNewslettersFromFirebaseStorage } from './firebase';
+import { formatFileSize } from './pdfStorage';
 import { 
   doc, 
   getDoc, 
@@ -252,6 +253,16 @@ export function getStoredSiteContent(): SiteContent {
   }
 }
 
+const LEGACY_MOCK_IDS = new Set([
+  'newsletter-02',
+  'newsletter-03',
+  'newsletter-04',
+  'newsletter-05',
+  'newsletter-06',
+  'newsletter-07',
+  'newsletter-08',
+]);
+
 export function getStoredNewsletters(): Newsletter[] {
   if (typeof window === 'undefined') return sortNewslettersLatestFirst(NEWSLETTERS);
   try {
@@ -260,7 +271,14 @@ export function getStoredNewsletters(): Newsletter[] {
       return sortNewslettersLatestFirst(NEWSLETTERS);
     }
     const parsed = JSON.parse(raw);
-    return sortNewslettersLatestFirst(Array.isArray(parsed) ? parsed : NEWSLETTERS);
+    const list: Newsletter[] = Array.isArray(parsed) ? parsed : NEWSLETTERS;
+    const filtered = list.filter((item) => !LEGACY_MOCK_IDS.has(item.id));
+    const sanitized = filtered.map((item) => ({
+      ...item,
+      // Strip dead session-scoped blob URLs from legacy local storage
+      pdfUrl: item.pdfUrl?.startsWith('blob:') ? undefined : item.pdfUrl,
+    }));
+    return sortNewslettersLatestFirst(sanitized.length > 0 ? sanitized : NEWSLETTERS);
   } catch {
     return sortNewslettersLatestFirst(NEWSLETTERS);
   }
@@ -302,6 +320,29 @@ export function setActiveSession(user: AdminUser | null): void {
 // Global Cloud Persistence (Firebase Firestore + Real-time Sync)
 // -------------------------------------------------------------
 
+/**
+ * Strips all keys with `undefined` values from an object recursively
+ * so Firestore setDoc / updateDoc / writeBatch will never throw invalid data errors.
+ */
+export function sanitizeForFirestore<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return null as any;
+  }
+  if (Array.isArray(data)) {
+    return data.map((item) => sanitizeForFirestore(item)) as any;
+  }
+  if (typeof data === 'object') {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data as Record<string, any>)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleaned as T;
+  }
+  return data;
+}
+
 export async function saveStoredSiteContent(content: SiteContent): Promise<void> {
   // Update local cache and fire immediate event
   if (typeof window !== 'undefined') {
@@ -312,7 +353,7 @@ export async function saveStoredSiteContent(content: SiteContent): Promise<void>
   // Push to Cloud Firestore for global persistence across all devices
   try {
     const contentRef = doc(db, 'siteContent', 'global');
-    await setDoc(contentRef, content, { merge: true });
+    await setDoc(contentRef, sanitizeForFirestore(content), { merge: true });
   } catch (err) {
     console.error('Error saving site content to Firestore:', err);
   }
@@ -333,7 +374,7 @@ export async function saveSingleNewsletter(newsletter: Newsletter): Promise<void
 
   try {
     const newsRef = doc(db, 'newsletters', newsletter.id);
-    await setDoc(newsRef, newsletter, { merge: true });
+    await setDoc(newsRef, sanitizeForFirestore(newsletter), { merge: true });
   } catch (err) {
     console.error('Error saving newsletter to Firestore:', err);
   }
@@ -350,7 +391,7 @@ export async function saveStoredNewsletters(newsletters: Newsletter[]): Promise<
     const batch = writeBatch(db);
     for (const item of sorted) {
       const newsRef = doc(db, 'newsletters', item.id);
-      batch.set(newsRef, item, { merge: true });
+      batch.set(newsRef, sanitizeForFirestore(item), { merge: true });
     }
     await batch.commit();
   } catch (err) {
@@ -385,7 +426,7 @@ export async function saveStoredAdminUsers(users: (AdminUser & { password?: stri
     const batch = writeBatch(db);
     for (const user of users) {
       const userRef = doc(db, 'adminUsers', user.id);
-      batch.set(userRef, user, { merge: true });
+      batch.set(userRef, sanitizeForFirestore(user), { merge: true });
     }
     await batch.commit();
   } catch (err) {
@@ -416,7 +457,7 @@ export function initGlobalFirestoreSync(): () => void {
       } else {
         // Seed initial site content to Firestore if not yet present
         const initial = getStoredSiteContent();
-        await setDoc(contentRef, initial, { merge: true });
+        await setDoc(contentRef, sanitizeForFirestore(initial), { merge: true });
       }
     }, (err) => {
       console.warn('Firestore siteContent sync notice:', err.message);
@@ -432,10 +473,30 @@ export function initGlobalFirestoreSync(): () => void {
     const unsubNews = onSnapshot(newsCol, async (snapshot) => {
       if (!snapshot.empty) {
         const items: Newsletter[] = [];
+        const toDeleteIds: string[] = [];
         snapshot.forEach((d) => {
-          items.push(d.data() as Newsletter);
+          const data = d.data() as Newsletter;
+          if (LEGACY_MOCK_IDS.has(d.id)) {
+            toDeleteIds.push(d.id);
+          } else {
+            items.push(data);
+          }
         });
-        const sorted = sortNewslettersLatestFirst(items);
+
+        // Clean up legacy mock documents from Firestore
+        if (toDeleteIds.length > 0) {
+          try {
+            const deleteBatch = writeBatch(db);
+            for (const delId of toDeleteIds) {
+              deleteBatch.delete(doc(db, 'newsletters', delId));
+            }
+            await deleteBatch.commit();
+          } catch (delErr) {
+            console.warn('Legacy mock cleanup notice:', delErr);
+          }
+        }
+
+        const sorted = sortNewslettersLatestFirst(items.length > 0 ? items : NEWSLETTERS);
         localStorage.setItem(NEWSLETTERS_KEY, JSON.stringify(sorted));
         window.dispatchEvent(new Event('newsletters-updated'));
       } else {
@@ -443,7 +504,7 @@ export function initGlobalFirestoreSync(): () => void {
         const defaultItems = sortNewslettersLatestFirst(NEWSLETTERS);
         const batch = writeBatch(db);
         for (const item of defaultItems) {
-          batch.set(doc(db, 'newsletters', item.id), item, { merge: true });
+          batch.set(doc(db, 'newsletters', item.id), sanitizeForFirestore(item), { merge: true });
         }
         await batch.commit();
       }
@@ -470,7 +531,7 @@ export function initGlobalFirestoreSync(): () => void {
         // Seed default admin accounts
         const batch = writeBatch(db);
         for (const user of defaultAdminUsers) {
-          batch.set(doc(db, 'adminUsers', user.id), user, { merge: true });
+          batch.set(doc(db, 'adminUsers', user.id), sanitizeForFirestore(user), { merge: true });
         }
         await batch.commit();
       }
@@ -482,8 +543,74 @@ export function initGlobalFirestoreSync(): () => void {
     console.warn('Failed to attach adminUsers listener:', e);
   }
 
+  // 4. Check and sync directly with Firebase Storage bucket files
+  syncNewslettersWithFirebaseStorage().catch((err) => {
+    console.warn('Initial storage auto-sync notice:', err);
+  });
+
   return () => {
     unsubscribers.forEach((unsub) => unsub());
     isSyncInitialized = false;
   };
+}
+
+/**
+ * Scans Firebase Storage and creates or syncs newsletter entries from any PDF files stored in the bucket.
+ */
+export async function syncNewslettersWithFirebaseStorage(): Promise<Newsletter[]> {
+  try {
+    const files = await listNewslettersFromFirebaseStorage();
+    if (!files || files.length === 0) {
+      return getStoredNewsletters();
+    }
+
+    const storageNewsletters: Newsletter[] = files.map((file, index) => {
+      const rawName = file.originalName || file.name;
+      const cleanName = rawName
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[_-]+/g, ' ')
+        .trim();
+
+      const title = cleanName
+        ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
+        : `Crypto Confidant Edition ${index + 1}`;
+
+      const id = file.newsletterId && !file.newsletterId.includes('/')
+        ? file.newsletterId
+        : `storage-${index + 1}`;
+
+      const formattedDate = file.updated
+        ? new Date(file.updated).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : 'Official Edition';
+
+      return {
+        id,
+        issueNumber: `Newsletter ${String(index + 1).padStart(2, '0')}`,
+        date: formattedDate,
+        title,
+        category: 'Official Publication',
+        readTime: 'PDF Document',
+        pdfUrl: file.downloadUrl,
+        pdfFileName: rawName,
+        pdfFileSize: file.size ? formatFileSize(file.size) : 'Firebase Storage',
+        introParagraphs: [
+          ``
+        ],
+        sources: [
+          {
+            name: 'Firebase Storage',
+            details: `gs://crypto-confidant-2026.firebasestorage.app/${file.fullPath}`
+          }
+        ]
+      };
+    });
+
+    if (storageNewsletters.length > 0) {
+      await saveStoredNewsletters(storageNewsletters);
+      return storageNewsletters;
+    }
+  } catch (err) {
+    console.warn('Could not sync storage items to newsletter database:', err);
+  }
+  return getStoredNewsletters();
 }
