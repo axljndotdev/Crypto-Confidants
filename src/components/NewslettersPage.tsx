@@ -1,12 +1,31 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
+
 import { Newsletter } from '../data/newsletters';
-import { 
-  getStoredNewsletters, 
-  formatNewsletterDate, 
-  sortNewslettersLatestFirst 
+
+import {
+  getStoredNewsletters,
+  formatNewsletterDate,
+  sortNewslettersLatestFirst,
 } from '../lib/contentStore';
+
 import { getPdfBlobUrl } from '../lib/pdfStorage';
+
 import { BrandMark } from './BrandMark';
+
+import {
+  Document,
+  Page,
+  pdfjs,
+} from 'react-pdf';
+
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,7 +37,46 @@ import {
   ChevronDown,
   FileText,
   Download,
+  Maximize2,
+  Loader2,
+  RotateCcw,
 } from 'lucide-react';
+
+/*
+ * ============================================================
+ * PDF.JS WORKER
+ * ============================================================
+ *
+ * IMPORTANT:
+ *
+ * Do not use:
+ *
+ * new URL(
+ *   'pdfjs-dist/build/pdf.worker.min.mjs',
+ *   import.meta.url
+ * )
+ *
+ * with every Vite/react-pdf setup. Depending on the installed
+ * pdfjs-dist version, this can result in the worker failing to
+ * load and PDF.js subsequently reporting a generic rendering
+ * error.
+ *
+ * Using the worker from a CDN keeps the worker independent from
+ * Vite's asset processing.
+ *
+ * The worker version MUST match the PDF.js version bundled with
+ * react-pdf.
+ */
+
+pdfjs.GlobalWorkerOptions.workerSrc =
+  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+
+/*
+ * ============================================================
+ * TYPES
+ * ============================================================
+ */
 
 interface NewslettersPageProps {
   onBackHome: () => void;
@@ -26,199 +84,840 @@ interface NewslettersPageProps {
   onOpenPricing?: () => void;
 }
 
-export const NewslettersPage: React.FC<NewslettersPageProps> = ({
+
+/*
+ * ============================================================
+ * COMPONENT
+ * ============================================================
+ */
+
+export const NewslettersPage: React.FC<
+  NewslettersPageProps
+> = ({
   onBackHome,
   initialNewsletterId,
   onOpenPricing,
 }) => {
-  const [allNewsletters, setAllNewsletters] = useState<Newsletter[]>(() => getStoredNewsletters());
+
+  /*
+   * ==========================================================
+   * NEWSLETTER DATA
+   * ==========================================================
+   */
+
+  const [allNewsletters, setAllNewsletters] =
+    useState<Newsletter[]>(() =>
+      getStoredNewsletters()
+    );
 
   useEffect(() => {
     const handleNewslettersUpdated = () => {
-      setAllNewsletters(getStoredNewsletters());
+      setAllNewsletters(
+        getStoredNewsletters()
+      );
     };
-    window.addEventListener('newsletters-updated', handleNewslettersUpdated);
+
+    window.addEventListener(
+      'newsletters-updated',
+      handleNewslettersUpdated
+    );
+
     return () => {
-      window.removeEventListener('newsletters-updated', handleNewslettersUpdated);
+      window.removeEventListener(
+        'newsletters-updated',
+        handleNewslettersUpdated
+      );
     };
   }, []);
 
+
   /*
-   * Sort newsletters:
-   * 1. Newest date → oldest date (newest on top)
-   * 2. If same date, larger issue number → smaller issue number
+   * ==========================================================
+   * SORT
+   * ==========================================================
    */
+
   const sortedNewsletters = useMemo(() => {
-    return sortNewslettersLatestFirst(allNewsletters);
+    return sortNewslettersLatestFirst(
+      allNewsletters
+    );
   }, [allNewsletters]);
+
+
+  /*
+   * ==========================================================
+   * SELECTION
+   * ==========================================================
+   */
 
   const [selectedNewsletterId, setSelectedNewsletterId] =
     useState<string | null>(
-      initialNewsletterId || sortedNewsletters[0]?.id || null
+      initialNewsletterId ||
+        sortedNewsletters[0]?.id ||
+        null
     );
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] =
-    useState<string>('All');
-
   /*
-   * Mobile archive starts collapsed.
-   *
-   * The newest newsletter remains visible by default.
+   * Keep selection valid if newsletter data changes.
    */
+
+  useEffect(() => {
+    if (
+      selectedNewsletterId &&
+      sortedNewsletters.some(
+        (newsletter) =>
+          newsletter.id ===
+          selectedNewsletterId
+      )
+    ) {
+      return;
+    }
+
+    if (sortedNewsletters[0]) {
+      setSelectedNewsletterId(
+        sortedNewsletters[0].id
+      );
+    }
+  }, [
+    sortedNewsletters,
+    selectedNewsletterId,
+  ]);
+
+
+  const [searchQuery, setSearchQuery] =
+    useState('');
+
+  const [selectedCategory, setSelectedCategory] =
+    useState('All');
+
   const [mobileArchiveOpen, setMobileArchiveOpen] =
     useState(false);
 
-  /*
-   * Scroll to top when selected newsletter changes.
-   */
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  }, [selectedNewsletterId]);
 
   /*
-   * Categories are generated from the sorted newsletter list.
+   * ==========================================================
+   * ACTIVE NEWSLETTER
+   * ==========================================================
    */
+
+  const activeNewsletter =
+    sortedNewsletters.find(
+      (newsletter) =>
+        newsletter.id ===
+        selectedNewsletterId
+    ) ||
+    sortedNewsletters[0];
+
+
+  /*
+   * ==========================================================
+   * PDF STATE
+   * ==========================================================
+   */
+
+  const [activePdfUrl, setActivePdfUrl] =
+    useState<string | null>(null);
+
+  const [activePdfFileName, setActivePdfFileName] =
+    useState<string | null>(null);
+
+  const [activePdfFileSize, setActivePdfFileSize] =
+    useState<string | null>(null);
+
+  const [pdfLoading, setPdfLoading] =
+    useState(false);
+
+  const [pdfLoadError, setPdfLoadError] =
+    useState(false);
+
+  const [pdfViewerFallback, setPdfViewerFallback] =
+    useState(false);
+
+  const [pdfErrorMessage, setPdfErrorMessage] =
+    useState<string | null>(null);
+
+  const [numPages, setNumPages] =
+    useState<number | null>(null);
+
+  const [pdfPage, setPdfPage] =
+    useState(1);
+
+  const [pdfScale, setPdfScale] =
+    useState(1);
+
+
+  /*
+   * ==========================================================
+   * VIEWER REF
+   * ==========================================================
+   */
+
+  const pdfViewerRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const [viewerWidth, setViewerWidth] =
+    useState(0);
+
+
+  /*
+   * ==========================================================
+   * RESPONSIVE VIEWER WIDTH
+   * ==========================================================
+   */
+
+  useEffect(() => {
+    const element =
+      pdfViewerRef.current;
+
+    if (!element) return;
+
+    const updateWidth = () => {
+      setViewerWidth(
+        element.clientWidth
+      );
+    };
+
+    updateWidth();
+
+    const observer =
+      new ResizeObserver(updateWidth);
+
+    observer.observe(element);
+
+    window.addEventListener(
+      'resize',
+      updateWidth
+    );
+
+    return () => {
+      observer.disconnect();
+
+      window.removeEventListener(
+        'resize',
+        updateWidth
+      );
+    };
+  }, [activePdfUrl]);
+
+
+  /*
+   * ==========================================================
+   * RESET PDF WHEN NEWSLETTER CHANGES
+   * ==========================================================
+   */
+
+  useEffect(() => {
+    setPdfPage(1);
+    setNumPages(null);
+    setPdfScale(1);
+    setPdfLoadError(false);
+    setPdfViewerFallback(false);
+    setPdfErrorMessage(null);
+  }, [activeNewsletter?.id]);
+
+
+  /*
+   * ==========================================================
+   * LOAD PDF
+   * ==========================================================
+   */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPdf = async () => {
+
+      setPdfLoading(true);
+      setPdfLoadError(false);
+      setPdfErrorMessage(null);
+
+      setActivePdfUrl(null);
+      setActivePdfFileName(null);
+      setActivePdfFileSize(null);
+
+      setNumPages(null);
+      setPdfPage(1);
+      setPdfScale(1);
+
+      if (!activeNewsletter) {
+        setPdfLoading(false);
+        return;
+      }
+
+
+      /*
+       * ------------------------------------------------------
+       * DIRECT PDF URL
+       * ------------------------------------------------------
+       */
+
+      if (activeNewsletter.pdfUrl) {
+
+        if (cancelled) return;
+
+        setActivePdfUrl(
+          activeNewsletter.pdfUrl
+        );
+
+        setActivePdfFileName(
+          activeNewsletter.pdfFileName ||
+            null
+        );
+
+        setActivePdfFileSize(
+          activeNewsletter.pdfFileSize ||
+            null
+        );
+
+        /*
+         * Do NOT consider the PDF loaded yet.
+         *
+         * PDF.js still needs to load and parse it.
+         */
+
+        setPdfLoading(true);
+
+        return;
+      }
+
+
+      /*
+       * ------------------------------------------------------
+       * STORAGE PDF
+       * ------------------------------------------------------
+       */
+
+      try {
+
+        const stored =
+          await getPdfBlobUrl(
+            activeNewsletter.id
+          );
+
+        if (cancelled) return;
+
+        if (!stored) {
+
+          setActivePdfUrl(null);
+          setActivePdfFileName(null);
+          setActivePdfFileSize(null);
+
+          setPdfLoading(false);
+
+          return;
+        }
+
+
+        setActivePdfUrl(
+          stored.blobUrl
+        );
+
+        setActivePdfFileName(
+          stored.fileName ||
+            null
+        );
+
+        setActivePdfFileSize(
+          stored.fileSize ||
+            null
+        );
+
+        /*
+         * Keep loading true until PDF.js confirms
+         * that the document has actually loaded.
+         */
+
+        setPdfLoading(true);
+
+      } catch (error) {
+
+        console.error(
+          'Failed to retrieve newsletter PDF:',
+          error
+        );
+
+        if (cancelled) return;
+
+        setActivePdfUrl(null);
+        setActivePdfFileName(null);
+        setActivePdfFileSize(null);
+
+        setPdfLoadError(true);
+
+        setPdfErrorMessage(
+          'The PDF file could not be retrieved.'
+        );
+
+        setPdfLoading(false);
+      }
+    };
+
+    loadPdf();
+
+    return () => {
+      cancelled = true;
+    };
+
+  }, [
+    activeNewsletter?.id,
+    activeNewsletter?.pdfUrl,
+  ]);
+
+
+  /*
+   * ==========================================================
+   * PDF LOAD SUCCESS
+   * ==========================================================
+   */
+
+  const handlePdfLoadSuccess = ({
+    numPages: loadedPages,
+  }: {
+    numPages: number;
+  }) => {
+
+    console.log(
+      'PDF loaded successfully:',
+      loadedPages,
+      'pages'
+    );
+
+    setNumPages(
+      loadedPages
+    );
+
+    setPdfPage(1);
+    setPdfLoading(false);
+    setPdfLoadError(false);
+    setPdfViewerFallback(false);
+    setPdfErrorMessage(null);
+  };
+
+
+  /*
+   * ==========================================================
+   * PDF LOAD ERROR
+   * ==========================================================
+   */
+
+  const handlePdfLoadError = (
+    error: Error
+  ) => {
+
+    console.error(
+      'PDF.js rendering error:',
+      error
+    );
+
+    setPdfLoading(false);
+    setPdfLoadError(true);
+    setPdfViewerFallback(true);
+
+    setPdfErrorMessage(
+      error?.message ||
+        'The PDF could not be rendered by the embedded viewer. The file will still open in a new tab.'
+    );
+  };
+
+
+  /*
+   * ==========================================================
+   * PAGE CONTROLS
+   * ==========================================================
+   */
+
+  const handlePreviousPage = () => {
+    setPdfPage((page) =>
+      Math.max(1, page - 1)
+    );
+  };
+
+  const handleNextPage = () => {
+
+    if (!numPages) return;
+
+    setPdfPage((page) =>
+      Math.min(
+        numPages,
+        page + 1
+      )
+    );
+  };
+
+
+  /*
+   * ==========================================================
+   * ZOOM
+   * ==========================================================
+   */
+
+  const handleZoomOut = () => {
+    setPdfScale((scale) =>
+      Math.max(
+        0.7,
+        Number(
+          (scale - 0.1).toFixed(1)
+        )
+      )
+    );
+  };
+
+  const handleZoomIn = () => {
+    setPdfScale((scale) =>
+      Math.min(
+        2,
+        Number(
+          (scale + 0.1).toFixed(1)
+        )
+      )
+    );
+  };
+
+
+  /*
+   * ==========================================================
+   * OPEN PDF
+   * ==========================================================
+   */
+
+  const handleOpenPdf = () => {
+
+    if (!activePdfUrl) return;
+
+    window.open(
+      activePdfUrl,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
+
+  /*
+   * ==========================================================
+   * RETRY
+   * ==========================================================
+   */
+
+  const handleRetryPdf = () => {
+
+    if (!activeNewsletter) return;
+
+    /*
+     * Force the effect to reload by briefly clearing
+     * the current PDF state.
+     */
+
+    setPdfLoadError(false);
+    setPdfViewerFallback(false);
+    setPdfErrorMessage(null);
+    setPdfLoading(true);
+    setNumPages(null);
+    setPdfPage(1);
+
+    setActivePdfUrl(null);
+
+    /*
+     * The following timeout changes the state after the
+     * current render so the PDF can be loaded again.
+     */
+
+    window.setTimeout(() => {
+
+      if (
+        activeNewsletter.pdfUrl
+      ) {
+
+        setActivePdfUrl(
+          activeNewsletter.pdfUrl
+        );
+
+      } else {
+
+        getPdfBlobUrl(
+          activeNewsletter.id
+        )
+          .then((stored) => {
+
+            if (!stored) {
+
+              setPdfLoading(false);
+              setPdfLoadError(true);
+              setPdfErrorMessage(
+                'The PDF file could not be retrieved.'
+              );
+
+              return;
+            }
+
+            setActivePdfUrl(
+              stored.blobUrl
+            );
+
+            setActivePdfFileName(
+              stored.fileName ||
+                null
+            );
+
+            setActivePdfFileSize(
+              stored.fileSize ||
+                null
+            );
+
+          })
+          .catch((error) => {
+
+            console.error(
+              'PDF retry failed:',
+              error
+            );
+
+            setPdfLoading(false);
+            setPdfLoadError(true);
+            setPdfErrorMessage(
+              error?.message ||
+                'The PDF could not be loaded.'
+            );
+
+          });
+      }
+
+    }, 50);
+  };
+
+
+  /*
+   * ==========================================================
+   * PDF WIDTH
+   * ==========================================================
+   */
+
+  const basePdfWidth =
+    viewerWidth > 0
+      ? Math.min(
+          Math.max(
+            viewerWidth - 32,
+            280
+          ),
+          900
+        )
+      : 700;
+
+  const pdfPageWidth =
+    Math.round(
+      basePdfWidth *
+        pdfScale
+    );
+
+
+  /*
+   * ==========================================================
+   * NAVIGATION
+   * ==========================================================
+   */
+
+  const activeIndex =
+    sortedNewsletters.findIndex(
+      (newsletter) =>
+        newsletter.id ===
+        activeNewsletter?.id
+    );
+
+  const prevNewsletter =
+    activeIndex >= 0 &&
+    activeIndex <
+      sortedNewsletters.length - 1
+      ? sortedNewsletters[
+          activeIndex + 1
+        ]
+      : null;
+
+  const nextNewsletter =
+    activeIndex > 0
+      ? sortedNewsletters[
+          activeIndex - 1
+        ]
+      : null;
+
+
+  /*
+   * ==========================================================
+   * CATEGORIES
+   * ==========================================================
+   */
+
   const categories = [
     'All',
     ...Array.from(
       new Set(
         sortedNewsletters.map(
-          (newsletter) => newsletter.category
+          (newsletter) =>
+            newsletter.category
         )
       )
     ),
   ];
 
+
   /*
-   * Filter the correctly sorted newsletter list.
+   * ==========================================================
+   * FILTER
+   * ==========================================================
    */
-  const filteredNewsletters = sortedNewsletters.filter(
-    (newsletter) => {
-      const matchesCategory =
-        selectedCategory === 'All' ||
-        newsletter.category === selectedCategory;
 
-      const normalizedSearch =
-        searchQuery.toLowerCase().trim();
+  const filteredNewsletters =
+    sortedNewsletters.filter(
+      (newsletter) => {
 
-      const matchesSearch =
-        normalizedSearch === '' ||
-        newsletter.title
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        newsletter.issueNumber
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        newsletter.introParagraphs.some((paragraph) =>
-          paragraph
+        const matchesCategory =
+          selectedCategory ===
+            'All' ||
+          newsletter.category ===
+            selectedCategory;
+
+        const normalizedSearch =
+          searchQuery
             .toLowerCase()
-            .includes(normalizedSearch)
+            .trim();
+
+        const matchesSearch =
+          normalizedSearch === '' ||
+          newsletter.title
+            .toLowerCase()
+            .includes(
+              normalizedSearch
+            ) ||
+          newsletter.issueNumber
+            .toLowerCase()
+            .includes(
+              normalizedSearch
+            ) ||
+          newsletter.introParagraphs.some(
+            (paragraph) =>
+              paragraph
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                )
+          );
+
+        return (
+          matchesCategory &&
+          matchesSearch
         );
-
-      return matchesCategory && matchesSearch;
-    }
-  );
-
-  /*
-   * Find the currently active newsletter.
-   */
-  const activeNewsletter =
-    sortedNewsletters.find(
-      (newsletter) =>
-        newsletter.id === selectedNewsletterId
-    ) || sortedNewsletters[0];
-
-  const [activePdfUrl, setActivePdfUrl] = useState<string | null>(null);
-  const [activePdfFileName, setActivePdfFileName] = useState<string | null>(null);
-  const [activePdfFileSize, setActivePdfFileSize] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    if (activeNewsletter) {
-      if (activeNewsletter.pdfUrl) {
-        setActivePdfUrl(activeNewsletter.pdfUrl);
-        setActivePdfFileName(activeNewsletter.pdfFileName || null);
-        setActivePdfFileSize(activeNewsletter.pdfFileSize || null);
-      } else {
-        getPdfBlobUrl(activeNewsletter.id).then((stored) => {
-          if (active) {
-            if (stored) {
-              setActivePdfUrl(stored.blobUrl);
-              setActivePdfFileName(stored.fileName);
-              setActivePdfFileSize(stored.fileSize);
-            } else {
-              setActivePdfUrl(null);
-              setActivePdfFileName(null);
-              setActivePdfFileSize(null);
-            }
-          }
-        });
       }
-    } else {
-      setActivePdfUrl(null);
-      setActivePdfFileName(null);
-      setActivePdfFileSize(null);
-    }
-    return () => {
-      active = false;
-    };
-  }, [activeNewsletter?.id, activeNewsletter?.pdfUrl]);
+    );
+
 
   /*
-   * Navigation follows the same sorted order.
+   * ==========================================================
+   * SELECT NEWSLETTER
+   * ==========================================================
    */
-  const activeIndex = sortedNewsletters.findIndex(
-    (newsletter) =>
-      newsletter.id === activeNewsletter?.id
-  );
 
-  const prevNewsletter =
-    activeIndex >= 0 &&
-    activeIndex < sortedNewsletters.length - 1
-      ? sortedNewsletters[activeIndex + 1]
-      : null;
+  const handleSelectNewsletter = (
+    newsletterId: string
+  ) => {
 
-  const nextNewsletter =
-    activeIndex > 0
-      ? sortedNewsletters[activeIndex - 1]
-      : null;
+    setSelectedNewsletterId(
+      newsletterId
+    );
 
-  /*
-   * Selecting a newsletter on mobile closes the archive.
-   */
-  const handleSelectNewsletter = (newsletterId: string) => {
-    setSelectedNewsletterId(newsletterId);
     setMobileArchiveOpen(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
   };
 
-  const toggleMobileArchive = () => {
-    setMobileArchiveOpen((current) => !current);
-  };
+
+  /*
+   * ==========================================================
+   * EMPTY STATE
+   * ==========================================================
+   */
 
   if (!activeNewsletter) {
+
     return (
-      <div className="min-h-screen pt-24 sm:pt-28 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto">
-        <div className="text-center py-16 sm:py-20">
-          <p className="text-base sm:text-lg text-theme-muted">
+      <div className="
+        min-h-screen
+        pt-24
+        sm:pt-28
+        pb-16
+        sm:pb-20
+        px-4
+        sm:px-6
+        lg:px-8
+        max-w-[1600px]
+        mx-auto
+      ">
+
+        <div className="
+          text-center
+          py-16
+          sm:py-20
+        ">
+
+          <p className="
+            text-base
+            sm:text-lg
+            text-theme-muted
+          ">
             No newsletters available.
           </p>
+
         </div>
+
       </div>
     );
   }
 
+
+  /*
+   * ==========================================================
+   * PAGE
+   * ==========================================================
+   */
+
   return (
-    <div className="min-h-screen w-full overflow-x-hidden pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-20 px-3 sm:px-5 md:px-6 lg:px-8 max-w-[1600px] mx-auto">
+    <div className="
+      min-h-screen
+      w-full
+      overflow-x-hidden
+      pt-24
+      sm:pt-28
+      lg:pt-32
+      pb-12
+      sm:pb-16
+      lg:pb-20
+      px-3
+      sm:px-5
+      md:px-6
+      lg:px-8
+      max-w-[1600px]
+      mx-auto
+    ">
 
-      {/* =========================================================
-          TOP HEADER / BREADCRUMBS
-      ========================================================= */}
+      {/* ======================================================
+          HEADER
+      ====================================================== */}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 pb-5 sm:pb-6 border-b border-theme-subtle mb-4 sm:mb-8">
+      <div className="
+        flex
+        flex-col
+        sm:flex-row
+        sm:items-center
+        sm:justify-between
+        gap-3
+        sm:gap-4
+        pb-5
+        sm:pb-6
+        border-b
+        border-theme-subtle
+        mb-4
+        sm:mb-8
+      ">
 
         <button
           onClick={onBackHome}
@@ -241,28 +940,54 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
             touch-manipulation
           "
         >
+
           <ArrowLeft className="w-4 h-4 shrink-0" />
-          <span>Return to Home</span>
+
+          <span>
+            Return to Home
+          </span>
+
         </button>
 
-        <div className="flex items-center">
-          <span className="text-xs sm:text-sm font-medium text-theme-muted uppercase tracking-wide">
-            {sortedNewsletters.length} Issues Published
+        <div className="
+          flex
+          items-center
+        ">
+
+          <span className="
+            text-xs
+            sm:text-sm
+            font-medium
+            text-theme-muted
+            uppercase
+            tracking-wide
+          ">
+            {sortedNewsletters.length}{' '}
+            Issues Published
           </span>
+
         </div>
 
       </div>
 
-      {/* =========================================================
-          MOBILE ARCHIVE TOGGLE
-      ========================================================= */}
+
+      {/* ======================================================
+          MOBILE ARCHIVE
+      ====================================================== */}
 
       <div className="lg:hidden mb-4">
 
         <button
           type="button"
-          onClick={toggleMobileArchive}
-          aria-expanded={mobileArchiveOpen}
+          onClick={() =>
+            setMobileArchiveOpen(
+              (current) =>
+                !current
+            )
+          }
+          aria-expanded={
+            mobileArchiveOpen
+          }
           className="
             w-full
             min-h-[58px]
@@ -283,98 +1008,202 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
           "
         >
 
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="
+            flex
+            items-center
+            gap-3
+            min-w-0
+          ">
 
-            <div className="w-9 h-9 rounded-lg bg-theme-brass/10 border border-theme-brass/20 flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5 text-theme-brass" />
+            <div className="
+              w-9
+              h-9
+              rounded-lg
+              bg-theme-brass/10
+              border
+              border-theme-brass/20
+              flex
+              items-center
+              justify-center
+              shrink-0
+            ">
+
+              <BookOpen className="
+                w-5
+                h-5
+                text-theme-brass
+              " />
+
             </div>
 
             <div className="min-w-0">
 
-              <div className="font-serif text-base sm:text-lg text-theme-main font-medium">
+              <div className="
+                font-serif
+                text-base
+                sm:text-lg
+                text-theme-main
+                font-medium
+              ">
                 Browse newsletters
               </div>
 
-              <div className="text-xs sm:text-sm text-theme-muted mt-0.5 truncate">
-                {activeNewsletter.issueNumber} · {activeNewsletter.title}
+              <div className="
+                text-xs
+                sm:text-sm
+                text-theme-muted
+                mt-0.5
+                truncate
+              ">
+                {activeNewsletter.issueNumber}
+                {' · '}
+                {activeNewsletter.title}
               </div>
 
             </div>
 
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-
-            <span className="hidden sm:inline text-xs font-medium uppercase tracking-wide text-theme-muted">
-              {mobileArchiveOpen ? 'Close' : 'Browse'}
-            </span>
-
-            <ChevronDown
-              className={`w-5 h-5 text-theme-muted transition-transform ${
+          <ChevronDown
+            className={`
+              w-5
+              h-5
+              text-theme-muted
+              transition-transform
+              shrink-0
+              ${
                 mobileArchiveOpen
                   ? 'rotate-180'
                   : ''
-              }`}
-            />
-
-          </div>
+              }
+            `}
+          />
 
         </button>
 
       </div>
 
-      {/* =========================================================
+
+      {/* ======================================================
           MAIN GRID
-      ========================================================= */}
+      ====================================================== */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-7 lg:gap-10 xl:gap-12 items-start">
+      <div className="
+        grid
+        grid-cols-1
+        lg:grid-cols-12
+        gap-5
+        sm:gap-7
+        lg:gap-10
+        xl:gap-12
+        items-start
+      ">
 
-        {/* =======================================================
-            LEFT COLUMN — NEWSLETTER ARCHIVE
-        ======================================================= */}
+
+        {/* ====================================================
+            ARCHIVE
+        ==================================================== */}
 
         <aside
           className={`
             lg:col-span-4
             xl:col-span-4
             min-w-0
-            ${mobileArchiveOpen ? 'block' : 'hidden'}
+            ${
+              mobileArchiveOpen
+                ? 'block'
+                : 'hidden'
+            }
             lg:block
           `}
         >
 
-          <div className="bg-theme-surface border border-theme rounded-2xl p-4 sm:p-5 shadow-xs space-y-5 lg:sticky lg:top-24">
+          <div className="
+            bg-theme-surface
+            border
+            border-theme
+            rounded-2xl
+            p-4
+            sm:p-5
+            shadow-xs
+            space-y-5
+            lg:sticky
+            lg:top-24
+          ">
 
-            {/* Archive Header */}
+            <div className="
+              flex
+              items-center
+              justify-between
+              gap-3
+            ">
 
-            <div className="flex items-center justify-between gap-3">
+              <h2 className="
+                font-serif
+                text-lg
+                sm:text-xl
+                text-theme-main
+                font-medium
+                flex
+                items-center
+                gap-2
+                min-w-0
+              ">
 
-              <h2 className="font-serif text-lg sm:text-xl text-theme-main font-medium flex items-center gap-2 min-w-0">
-                <BookOpen className="w-5 h-5 text-theme-brass shrink-0" />
+                <BookOpen className="
+                  w-5
+                  h-5
+                  text-theme-brass
+                  shrink-0
+                " />
 
                 <span className="truncate">
                   Newsletter Dispatch
                 </span>
+
               </h2>
 
-              <span className="shrink-0 text-xs font-medium px-2.5 py-1.5 rounded bg-theme-surface-hover text-theme-brass border border-theme">
+              <span className="
+                shrink-0
+                text-xs
+                font-medium
+                px-2.5
+                py-1.5
+                rounded
+                bg-theme-surface-hover
+                text-theme-brass
+                border
+                border-theme
+              ">
                 Archive
               </span>
 
             </div>
 
-            {/* Search Input */}
+
+            {/* SEARCH */}
 
             <div className="relative">
 
-              <Search className="w-5 h-5 text-theme-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="
+                w-5
+                h-5
+                text-theme-muted
+                absolute
+                left-3.5
+                top-1/2
+                -translate-y-1/2
+                pointer-events-none
+              " />
 
               <input
                 type="text"
                 placeholder="Search newsletters..."
                 value={searchQuery}
-                onChange={(e) =>
-                  setSearchQuery(e.target.value)
+                onChange={(event) =>
+                  setSearchQuery(
+                    event.target.value
+                  )
                 }
                 aria-label="Search newsletters"
                 className="
@@ -397,131 +1226,181 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
 
             </div>
 
-            {/* Category Filter Pills */}
 
-            <div
-              className="
-                flex
-                gap-2
-                pt-0.5
-                overflow-x-auto
-                overscroll-x-contain
-                pb-1
-                -mx-0.5
-                px-0.5
-                scrollbar-none
-                touch-pan-x
-              "
-            >
+            {/* CATEGORIES */}
 
-              {categories.map((category) => (
+            <div className="
+              flex
+              gap-2
+              pt-0.5
+              overflow-x-auto
+              pb-1
+              scrollbar-none
+              touch-pan-x
+            ">
 
-                <button
-                  key={category}
-                  onClick={() =>
-                    setSelectedCategory(category)
-                  }
-                  className={`
-                    min-h-[42px]
-                    shrink-0
-                    whitespace-nowrap
-                    text-xs
-                    sm:text-sm
-                    font-medium
-                    px-3.5
-                    rounded-lg
-                    transition-all
-                    cursor-pointer
-                    touch-manipulation
-                    ${
-                      selectedCategory === category
-                        ? 'bg-theme-brass/20 text-theme-brass border border-theme-brass/40 font-semibold'
-                        : 'bg-theme-surface-hover text-theme-muted hover:text-theme-main border border-theme'
+              {categories.map(
+                (category) => (
+
+                  <button
+                    key={category}
+                    onClick={() =>
+                      setSelectedCategory(
+                        category
+                      )
                     }
-                  `}
-                >
-                  {category}
-                </button>
+                    className={`
+                      min-h-[42px]
+                      shrink-0
+                      whitespace-nowrap
+                      text-xs
+                      sm:text-sm
+                      font-medium
+                      px-3.5
+                      rounded-lg
+                      transition-all
+                      cursor-pointer
+                      touch-manipulation
+                      ${
+                        selectedCategory ===
+                        category
+                          ? 'bg-theme-brass/20 text-theme-brass border border-theme-brass/40 font-semibold'
+                          : 'bg-theme-surface-hover text-theme-muted hover:text-theme-main border border-theme'
+                      }
+                    `}
+                  >
+                    {category}
+                  </button>
 
-              ))}
+                )
+              )}
 
             </div>
 
-            {/* Newsletter List */}
 
-            <div className="space-y-2.5 pt-1 max-h-[420px] sm:max-h-[500px] lg:max-h-[calc(100vh-320px)] overflow-y-auto overscroll-contain pr-0.5 scrollbar-thin">
+            {/* LIST */}
+
+            <div className="
+              space-y-2.5
+              pt-1
+              max-h-[420px]
+              sm:max-h-[500px]
+              lg:max-h-[calc(100vh-320px)]
+              overflow-y-auto
+              overscroll-contain
+              pr-0.5
+              scrollbar-thin
+            ">
 
               {filteredNewsletters.length === 0 ? (
 
-                <div className="text-center py-10 px-4 text-sm sm:text-base text-theme-muted leading-relaxed">
-                  No newsletters match your search criteria.
+                <div className="
+                  text-center
+                  py-10
+                  px-4
+                  text-sm
+                  sm:text-base
+                  text-theme-muted
+                  leading-relaxed
+                ">
+                  No newsletters match your
+                  search criteria.
                 </div>
 
               ) : (
 
-                filteredNewsletters.map((newsletter) => {
+                filteredNewsletters.map(
+                  (newsletter) => {
 
-                  const isSelected =
-                    newsletter.id ===
-                    activeNewsletter.id;
+                    const isSelected =
+                      newsletter.id ===
+                      activeNewsletter.id;
 
-                  return (
-                    <button
-                      key={newsletter.id}
-                      onClick={() =>
-                        handleSelectNewsletter(
-                          newsletter.id
-                        )
-                      }
-                      className={`
-                        w-full
-                        min-h-[120px]
-                        text-left
-                        p-3.5
-                        sm:p-4
-                        rounded-xl
-                        border
-                        transition-all
-                        cursor-pointer
-                        touch-manipulation
-                        flex
-                        flex-col
-                        gap-2
-                        ${
-                          isSelected
-                            ? 'bg-theme-brass/10 border-theme-brass/50 text-theme-main shadow-xs'
-                            : 'bg-theme-main/50 border-theme hover:border-theme-brass/30 text-theme-muted hover:text-theme-main'
+                    return (
+
+                      <button
+                        key={newsletter.id}
+                        onClick={() =>
+                          handleSelectNewsletter(
+                            newsletter.id
+                          )
                         }
-                      `}
-                    >
+                        className={`
+                          w-full
+                          min-h-[120px]
+                          text-left
+                          p-3.5
+                          sm:p-4
+                          rounded-xl
+                          border
+                          transition-all
+                          cursor-pointer
+                          touch-manipulation
+                          flex
+                          flex-col
+                          gap-2
+                          ${
+                            isSelected
+                              ? 'bg-theme-brass/10 border-theme-brass/50 text-theme-main shadow-xs'
+                              : 'bg-theme-main/50 border-theme hover:border-theme-brass/30 text-theme-muted hover:text-theme-main'
+                          }
+                        `}
+                      >
 
-                      {/* Date / Newsletter Number */}
+                        <div className="
+                          flex
+                          items-center
+                          justify-between
+                          gap-3
+                          text-xs
+                          sm:text-sm
+                        ">
 
-                      <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
-
-                        <span className="text-theme-brass font-semibold whitespace-nowrap">
-                          {formatNewsletterDate(
-                            newsletter.date
-                          )}
-                        </span>
-
-                        <div className="flex items-center gap-1.5 whitespace-nowrap">
-                          {newsletter.pdfUrl && (
-                            <span className="text-[10px] font-mono text-theme-brass bg-theme-brass/10 border border-theme-brass/30 px-1.5 py-0.5 rounded font-semibold">
-                              PDF
-                            </span>
-                          )}
-                          <span className="text-theme-muted">
-                            {newsletter.issueNumber}
+                          <span className="
+                            text-theme-brass
+                            font-semibold
+                            whitespace-nowrap
+                          ">
+                            {formatNewsletterDate(
+                              newsletter.date
+                            )}
                           </span>
+
+                          <div className="
+                            flex
+                            items-center
+                            gap-1.5
+                            whitespace-nowrap
+                          ">
+
+                            {newsletter.pdfUrl && (
+
+                              <span className="
+                                text-[10px]
+                                font-mono
+                                text-theme-brass
+                                bg-theme-brass/10
+                                border
+                                border-theme-brass/30
+                                px-1.5
+                                py-0.5
+                                rounded
+                                font-semibold
+                              ">
+                                PDF
+                              </span>
+
+                            )}
+
+                            <span className="text-theme-muted">
+                              {newsletter.issueNumber}
+                            </span>
+
+                          </div>
+
                         </div>
 
-                      </div>
-
-                      {/* Title */}
-
-                      <h3
-                        className={`
+                        <h3 className={`
                           text-sm
                           sm:text-base
                           font-serif
@@ -532,29 +1411,61 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                               ? 'font-semibold text-theme-main'
                               : 'font-normal'
                           }
-                        `}
-                      >
-                        {newsletter.title}
-                      </h3>
+                        `}>
+                          {newsletter.title}
+                        </h3>
 
-                      {/* Category + Read Time */}
+                        <div className="
+                          flex
+                          items-center
+                          justify-between
+                          gap-2
+                          pt-1
+                          mt-auto
+                        ">
 
-                      <div className="flex items-center justify-between gap-2 pt-1 mt-auto">
+                          <span className="
+                            max-w-[65%]
+                            truncate
+                            text-xs
+                            px-2.5
+                            py-1.5
+                            rounded
+                            bg-theme-surface
+                            border
+                            border-theme
+                            text-theme-muted
+                          ">
+                            {newsletter.category}
+                          </span>
 
-                        <span className="max-w-[65%] truncate text-xs px-2.5 py-1.5 rounded bg-theme-surface border border-theme text-theme-muted">
-                          {newsletter.category}
-                        </span>
+                          <span className="
+                            shrink-0
+                            text-xs
+                            text-theme-muted
+                            flex
+                            items-center
+                            gap-1.5
+                          ">
 
-                        <span className="shrink-0 text-xs text-theme-muted flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 shrink-0" />
-                          {newsletter.readTime}
-                        </span>
+                            <Clock className="
+                              w-3.5
+                              h-3.5
+                              shrink-0
+                            " />
 
-                      </div>
+                            {newsletter.readTime}
 
-                    </button>
-                  );
-                })
+                          </span>
+
+                        </div>
+
+                      </button>
+
+                    );
+                  }
+                )
+
               )}
 
             </div>
@@ -563,38 +1474,107 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
 
         </aside>
 
-        {/* =======================================================
-            RIGHT COLUMN — ACTIVE NEWSLETTER
-        ======================================================= */}
 
-        <main className="lg:col-span-8 xl:col-span-8 min-w-0">
+        {/* ====================================================
+            MAIN ARTICLE
+        ==================================================== */}
 
-          <article className="bg-theme-surface border border-theme rounded-2xl overflow-hidden shadow-md">
+        <main className="
+          lg:col-span-8
+          xl:col-span-8
+          min-w-0
+        ">
 
-            {/* ===================================================
-                HEADER BANNER
-            =================================================== */}
+          <article className="
+            bg-theme-surface
+            border
+            border-theme
+            rounded-2xl
+            overflow-hidden
+            shadow-md
+          ">
 
-            <div className="bg-[#0D0C0A] text-[#E8E4D9] px-4 py-7 sm:px-8 sm:py-9 lg:p-10 border-b border-[#3A3326] relative text-center space-y-4">
 
-              <div className="inline-flex items-center justify-center p-2.5 sm:p-3 rounded-xl bg-[#1A1814] border border-[#3A3326]">
+            {/* =================================================
+                HEADER
+            ================================================= */}
+
+            <div className="
+              bg-[#0D0C0A]
+              text-[#E8E4D9]
+              px-4
+              py-7
+              sm:px-8
+              sm:py-9
+              lg:p-10
+              border-b
+              border-[#3A3326]
+              relative
+              text-center
+              space-y-4
+            ">
+
+              <div className="
+                inline-flex
+                items-center
+                justify-center
+                p-2.5
+                sm:p-3
+                rounded-xl
+                bg-[#1A1814]
+                border
+                border-[#3A3326]
+              ">
+
                 <BrandMark
                   size={34}
                   variant="brass"
                 />
+
               </div>
 
-              <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#FAF8F5] tracking-tight font-normal break-words">
+              <h1 className="
+                font-serif
+                text-2xl
+                sm:text-3xl
+                lg:text-4xl
+                text-[#FAF8F5]
+                tracking-tight
+                font-normal
+                break-words
+              ">
                 CryptoConfidant.com
               </h1>
 
-              <p className="text-sm sm:text-base leading-relaxed font-sans text-[#C5C0B6] tracking-wide max-w-lg mx-auto">
-                Confidential conversations and education on wealth sovereignty and crypto options.
+              <p className="
+                text-sm
+                sm:text-base
+                leading-relaxed
+                font-sans
+                text-[#C5C0B6]
+                tracking-wide
+                max-w-lg
+                mx-auto
+              ">
+                Confidential conversations and
+                education on wealth sovereignty
+                and crypto options.
               </p>
 
-              {/* Date / Newsletter */}
-
-              <div className="pt-4 mt-1 flex items-center justify-between gap-4 border-t border-[#2A261F] text-xs sm:text-sm font-medium text-[#D4C5A9]">
+              <div className="
+                pt-4
+                mt-1
+                flex
+                items-center
+                justify-between
+                gap-4
+                border-t
+                border-[#2A261F]
+                text-xs
+                sm:text-sm
+                font-medium
+                text-[#D4C5A9]
+              ">
 
                 <span className="font-bold tracking-wide">
                   {formatNewsletterDate(
@@ -610,17 +1590,48 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
 
             </div>
 
-            {/* ===================================================
-                NEWSLETTER ARTICLE BODY
-            =================================================== */}
 
-            <div className="px-4 py-7 sm:px-7 sm:py-9 lg:p-10 space-y-8 sm:space-y-9">
+            {/* =================================================
+                BODY
+            ================================================= */}
 
-              {/* Article Title */}
+            <div className="
+              px-4
+              py-7
+              sm:px-7
+              sm:py-9
+              lg:p-10
+              space-y-8
+              sm:space-y-9
+            ">
 
-              <div className="space-y-4 pb-6 sm:pb-7 border-b border-theme-subtle">
 
-                <div className="inline-flex max-w-full items-center gap-2 px-3.5 py-2 rounded-full bg-theme-brass/10 border border-theme-brass/30 text-theme-brass text-xs sm:text-sm font-medium">
+              {/* TITLE */}
+
+              <div className="
+                space-y-4
+                pb-6
+                sm:pb-7
+                border-b
+                border-theme-subtle
+              ">
+
+                <div className="
+                  inline-flex
+                  max-w-full
+                  items-center
+                  gap-2
+                  px-3.5
+                  py-2
+                  rounded-full
+                  bg-theme-brass/10
+                  border
+                  border-theme-brass/30
+                  text-theme-brass
+                  text-xs
+                  sm:text-sm
+                  font-medium
+                ">
 
                   <span className="truncate">
                     {activeNewsletter.category}
@@ -636,42 +1647,858 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
 
                 </div>
 
-                <h2 className="font-serif text-[1.8rem] leading-[1.2] sm:text-3xl lg:text-4xl font-normal text-theme-main break-words">
+                <h2 className="
+                  font-serif
+                  text-[1.8rem]
+                  leading-[1.2]
+                  sm:text-3xl
+                  lg:text-4xl
+                  font-normal
+                  text-theme-main
+                  break-words
+                ">
                   {activeNewsletter.title}
                 </h2>
 
                 {activeNewsletter.subtitle && (
-                  <p className="text-base sm:text-lg text-theme-muted font-sans italic leading-relaxed">
+
+                  <p className="
+                    text-base
+                    sm:text-lg
+                    text-theme-muted
+                    font-sans
+                    italic
+                    leading-relaxed
+                  ">
                     {activeNewsletter.subtitle}
                   </p>
-                )}
 
-                {activePdfUrl && (
-                  <div className="pt-2">
-                    <a
-                      id={`newsletter-pdf-download-btn-${activeNewsletter.id}`}
-                      href={activePdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={activePdfFileName || `${activeNewsletter.issueNumber.replace(/\s+/g, '_')}_Official_Edition.pdf`}
-                      className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-theme-brass/15 hover:bg-theme-brass/25 border border-theme-brass/40 text-theme-brass text-xs sm:text-sm font-medium transition-all shadow-xs group cursor-pointer"
-                    >
-                      <FileText className="w-4 h-4 text-theme-brass shrink-0" />
-                      <span className="font-semibold">Download Official PDF Edition</span>
-                      {activePdfFileSize && (
-                        <span className="text-[11px] font-mono text-theme-muted uppercase tracking-wider">
-                          ({activePdfFileSize})
-                        </span>
-                      )}
-                      <Download className="w-3.5 h-3.5 ml-0.5 opacity-80 group-hover:translate-y-0.5 transition-transform" />
-                    </a>
-                  </div>
                 )}
 
               </div>
 
+
               {/* =================================================
-                  INTRO PARAGRAPHS
+                  PDF VIEWER
+              ================================================= */}
+
+              {activePdfUrl && (
+
+                <section
+                  aria-label="Official PDF edition"
+                  className="
+                    rounded-2xl
+                    overflow-hidden
+                    border
+                    border-theme
+                    bg-[#0D0C0A]
+                    shadow-sm
+                  "
+                >
+
+                  {/* PDF HEADER */}
+
+                  <div className="
+                    px-3
+                    sm:px-4
+                    py-3
+                    bg-[#171512]
+                    border-b
+                    border-[#332E25]
+                  ">
+
+                    <div className="
+                      flex
+                      flex-col
+                      sm:flex-row
+                      sm:items-center
+                      sm:justify-between
+                      gap-3
+                    ">
+
+                      <div className="
+                        flex
+                        items-center
+                        gap-3
+                        min-w-0
+                      ">
+
+                        <div className="
+                          w-9
+                          h-9
+                          sm:w-10
+                          sm:h-10
+                          rounded-lg
+                          bg-theme-brass/10
+                          border
+                          border-theme-brass/25
+                          flex
+                          items-center
+                          justify-center
+                          shrink-0
+                        ">
+
+                          <FileText className="
+                            w-4
+                            h-4
+                            sm:w-5
+                            sm:h-5
+                            text-theme-brass
+                          " />
+
+                        </div>
+
+                        <div className="min-w-0">
+
+                          <div className="
+                            text-xs
+                            sm:text-sm
+                            font-semibold
+                            text-[#F4F0E8]
+                          ">
+                            Official Edition
+                          </div>
+
+                          <div className="
+                            text-[11px]
+                            sm:text-xs
+                            text-[#A9A39A]
+                            truncate
+                          ">
+
+                            {activePdfFileName ||
+                              `${activeNewsletter.issueNumber}_Official_Edition.pdf`}
+
+                            {activePdfFileSize
+                              ? ` · ${activePdfFileSize}`
+                              : ''}
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="
+                        flex
+                        items-center
+                        gap-2
+                        w-full
+                        sm:w-auto
+                      ">
+
+                        <button
+                          type="button"
+                          onClick={
+                            handleOpenPdf
+                          }
+                          className="
+                            min-h-[42px]
+                            flex-1
+                            sm:flex-none
+                            inline-flex
+                            items-center
+                            justify-center
+                            gap-2
+                            px-3.5
+                            rounded-lg
+                            border
+                            border-[#4A4439]
+                            bg-[#211E19]
+                            hover:bg-[#2A261F]
+                            text-[#E8E4D9]
+                            text-xs
+                            sm:text-sm
+                            font-medium
+                            transition-colors
+                            cursor-pointer
+                          "
+                        >
+
+                          <Maximize2 className="w-4 h-4" />
+
+                          Open
+
+                        </button>
+
+
+                        <a
+                          href={activePdfUrl}
+                          download={
+                            activePdfFileName ||
+                            `${activeNewsletter.issueNumber.replace(
+                              /\s+/g,
+                              '_'
+                            )}_Official_Edition.pdf`
+                          }
+                          className="
+                            min-h-[42px]
+                            flex-1
+                            sm:flex-none
+                            inline-flex
+                            items-center
+                            justify-center
+                            gap-2
+                            px-3.5
+                            rounded-lg
+                            bg-theme-brass
+                            hover:opacity-90
+                            text-[#17130C]
+                            text-xs
+                            sm:text-sm
+                            font-semibold
+                            transition-opacity
+                            cursor-pointer
+                          "
+                        >
+
+                          <Download className="w-4 h-4" />
+
+                          Download
+
+                        </a>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* =================================================
+                      PDF CONTROLS
+                  ================================================= */}
+
+                  <div className="
+                    px-3
+                    sm:px-4
+                    py-2.5
+                    bg-[#211E19]
+                    border-b
+                    border-[#332E25]
+                    flex
+                    items-center
+                    justify-between
+                    gap-3
+                  ">
+
+                    <div className="
+                      flex
+                      items-center
+                      gap-1
+                    ">
+
+                      <button
+                        type="button"
+                        disabled={
+                          pdfPage <= 1 ||
+                          !numPages
+                        }
+                        onClick={
+                          handlePreviousPage
+                        }
+                        className="
+                          w-9
+                          h-9
+                          rounded-lg
+                          border
+                          border-[#4A4439]
+                          text-[#D8D2C7]
+                          hover:bg-[#302C25]
+                          disabled:opacity-30
+                          flex
+                          items-center
+                          justify-center
+                          cursor-pointer
+                        "
+                        aria-label="Previous page"
+                      >
+
+                        <ArrowLeft className="w-4 h-4" />
+
+                      </button>
+
+
+                      <div className="
+                        min-w-[90px]
+                        h-9
+                        px-3
+                        rounded-lg
+                        border
+                        border-[#4A4439]
+                        bg-[#171512]
+                        flex
+                        items-center
+                        justify-center
+                        text-xs
+                        text-[#D8D2C7]
+                        font-medium
+                      ">
+
+                        {numPages
+                          ? `Page ${pdfPage} / ${numPages}`
+                          : 'Loading…'}
+
+                      </div>
+
+
+                      <button
+                        type="button"
+                        disabled={
+                          !numPages ||
+                          pdfPage >=
+                            numPages
+                        }
+                        onClick={
+                          handleNextPage
+                        }
+                        className="
+                          w-9
+                          h-9
+                          rounded-lg
+                          border
+                          border-[#4A4439]
+                          text-[#D8D2C7]
+                          hover:bg-[#302C25]
+                          disabled:opacity-30
+                          flex
+                          items-center
+                          justify-center
+                          cursor-pointer
+                        "
+                        aria-label="Next page"
+                      >
+
+                        <ArrowRight className="w-4 h-4" />
+
+                      </button>
+
+                    </div>
+
+
+                    <div className="
+                      flex
+                      items-center
+                      gap-1
+                    ">
+
+                      <button
+                        type="button"
+                        disabled={
+                          pdfScale <= 0.7
+                        }
+                        onClick={
+                          handleZoomOut
+                        }
+                        className="
+                          w-9
+                          h-9
+                          rounded-lg
+                          border
+                          border-[#4A4439]
+                          text-[#D8D2C7]
+                          hover:bg-[#302C25]
+                          disabled:opacity-30
+                          flex
+                          items-center
+                          justify-center
+                          text-lg
+                          cursor-pointer
+                        "
+                        aria-label="Zoom out"
+                      >
+                        −
+                      </button>
+
+
+                      <div className="
+                        hidden
+                        sm:flex
+                        min-w-[54px]
+                        h-9
+                        items-center
+                        justify-center
+                        text-xs
+                        text-[#A9A39A]
+                        font-medium
+                      ">
+                        {Math.round(
+                          pdfScale * 100
+                        )}
+                        %
+                      </div>
+
+
+                      <button
+                        type="button"
+                        disabled={
+                          pdfScale >= 2
+                        }
+                        onClick={
+                          handleZoomIn
+                        }
+                        className="
+                          w-9
+                          h-9
+                          rounded-lg
+                          border
+                          border-[#4A4439]
+                          text-[#D8D2C7]
+                          hover:bg-[#302C25]
+                          disabled:opacity-30
+                          flex
+                          items-center
+                          justify-center
+                          text-lg
+                          cursor-pointer
+                        "
+                        aria-label="Zoom in"
+                      >
+                        +
+                      </button>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* =================================================
+                      PDF DOCUMENT
+                  ================================================= */}
+
+                  <div
+                    ref={pdfViewerRef}
+                    className="
+                      relative
+                      bg-[#525252]
+                      overflow-auto
+                      flex
+                      justify-center
+                      py-6
+                      sm:py-8
+                      px-2
+                    "
+                    style={{
+                      minHeight:
+                        '520px',
+                      maxHeight:
+                        '820px',
+                    }}
+                  >
+
+                    {/* LOADING */}
+
+                    {pdfLoading && (
+
+                      <div className="
+                        absolute
+                        inset-0
+                        z-20
+                        flex
+                        items-center
+                        justify-center
+                        bg-[#24211C]
+                      ">
+
+                        <div className="
+                          flex
+                          flex-col
+                          items-center
+                          gap-3
+                          text-center
+                          px-6
+                        ">
+
+                          <Loader2 className="
+                            w-7
+                            h-7
+                            text-theme-brass
+                            animate-spin
+                          " />
+
+                          <span className="
+                            text-sm
+                            text-[#D4CFC5]
+                          ">
+                            Loading official
+                            edition…
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                    )}
+
+
+                    {/* ERROR */}
+
+                    {pdfLoadError && (
+
+                      <div className="
+                        absolute
+                        inset-0
+                        z-30
+                        flex
+                        items-center
+                        justify-center
+                        bg-[#24211C]
+                        p-6
+                        text-center
+                      ">
+
+                        <div className="max-w-sm">
+
+                          <div className="
+                            mx-auto
+                            w-12
+                            h-12
+                            rounded-full
+                            bg-theme-brass/10
+                            border
+                            border-theme-brass/25
+                            flex
+                            items-center
+                            justify-center
+                          ">
+
+                            <FileText className="
+                              w-6
+                              h-6
+                              text-theme-brass
+                            " />
+
+                          </div>
+
+
+                          <h3 className="
+                            mt-4
+                            text-base
+                            sm:text-lg
+                            font-semibold
+                            text-[#F4F0E8]
+                          ">
+                            PDF preview unavailable
+                          </h3>
+
+
+                          <p className="
+                            mt-2
+                            text-sm
+                            leading-relaxed
+                            text-[#B7B1A7]
+                          ">
+                            The official edition
+                            is available, but the
+                            document could not be
+                            rendered in the viewer.
+                          </p>
+
+
+                          {pdfErrorMessage && (
+
+                            <p className="
+                              mt-2
+                              text-[11px]
+                              leading-relaxed
+                              text-[#8F8980]
+                              break-words
+                            ">
+                              {pdfErrorMessage}
+                            </p>
+
+                          )}
+
+
+                          <div className="
+                            mt-5
+                            flex
+                            flex-col
+                            sm:flex-row
+                            items-stretch
+                            justify-center
+                            gap-2
+                          ">
+
+                            <button
+                              type="button"
+                              onClick={
+                                handleRetryPdf
+                              }
+                              className="
+                                inline-flex
+                                min-h-[44px]
+                                items-center
+                                justify-center
+                                gap-2
+                                px-4
+                                rounded-lg
+                                border
+                                border-[#4A4439]
+                                bg-[#211E19]
+                                text-[#E8E4D9]
+                                text-sm
+                                font-medium
+                                cursor-pointer
+                              "
+                            >
+
+                              <RotateCcw className="w-4 h-4" />
+
+                              Retry
+
+                            </button>
+
+
+                            <button
+                              type="button"
+                              onClick={
+                                handleOpenPdf
+                              }
+                              className="
+                                inline-flex
+                                min-h-[44px]
+                                items-center
+                                justify-center
+                                gap-2
+                                px-4
+                                rounded-lg
+                                bg-theme-brass
+                                text-[#17130C]
+                                text-sm
+                                font-semibold
+                                cursor-pointer
+                              "
+                            >
+
+                              <ExternalLink className="w-4 h-4" />
+
+                              Open PDF
+
+                            </button>
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    )}
+
+
+                    {/* =================================================
+                        PDF.JS
+                    ================================================= */}
+
+                    {!pdfLoadError &&
+                      activePdfUrl &&
+                      !pdfViewerFallback && (
+
+                        <Document
+                          key={activePdfUrl}
+                          file={{
+                            url: activePdfUrl,
+                          }}
+                          onLoadSuccess={
+                            handlePdfLoadSuccess
+                          }
+                          onLoadError={
+                            handlePdfLoadError
+                          }
+                          loading={null}
+                          error={null}
+                          className="
+                            flex
+                            justify-center
+                            items-start
+                          "
+                          options={{
+                            disableAutoFetch: false,
+                            disableStream: false,
+                          }}
+                        >
+
+                          {viewerWidth > 0 && (
+
+                            <Page
+                              key={`${activePdfUrl}-${pdfPage}-${pdfScale}`}
+                              pageNumber={
+                                pdfPage
+                              }
+                              width={
+                                pdfPageWidth
+                              }
+                              renderTextLayer={
+                                true
+                              }
+                              renderAnnotationLayer={
+                                true
+                              }
+                              className="
+                                shadow-2xl
+                                bg-white
+                              "
+                            />
+
+                          )}
+
+                        </Document>
+
+                      )}
+
+                    {activePdfUrl &&
+                      pdfViewerFallback && (
+                        <div className="flex justify-center bg-white p-2 sm:p-4">
+                          <object
+                            data={activePdfUrl}
+                            type="application/pdf"
+                            className="w-full max-w-4xl border-0"
+                            style={{
+                              height: '760px',
+                              minHeight: '520px',
+                              background: '#ffffff',
+                            }}
+                          >
+                            <div className="flex min-h-[520px] items-center justify-center bg-white p-6 text-center text-sm text-slate-600">
+                              This browser cannot preview the PDF inline. Use the Open PDF button to view it in a new tab.
+                            </div>
+                          </object>
+                        </div>
+                      )}
+
+                  </div>
+
+
+                  {/* FOOTER */}
+
+                  <div className="
+                    px-3.5
+                    sm:px-4
+                    py-3
+                    bg-[#171512]
+                    border-t
+                    border-[#332E25]
+                    flex
+                    items-center
+                    justify-between
+                    gap-3
+                  ">
+
+                    <div className="
+                      flex
+                      items-center
+                      gap-2
+                      text-[11px]
+                      sm:text-xs
+                      text-[#A9A39A]
+                      min-w-0
+                    ">
+
+                      <FileText className="
+                        w-3.5
+                        h-3.5
+                        text-theme-brass
+                        shrink-0
+                      " />
+
+                      <span className="truncate">
+                        Official CryptoConfidant
+                        edition
+                      </span>
+
+                    </div>
+
+
+                    {numPages && (
+
+                      <span className="
+                        shrink-0
+                        text-[11px]
+                        sm:text-xs
+                        text-[#A9A39A]
+                      ">
+                        {numPages}{' '}
+                        {numPages === 1
+                          ? 'page'
+                          : 'pages'}
+                      </span>
+
+                    )}
+
+                  </div>
+
+                </section>
+
+              )}
+
+
+              {/* =================================================
+                  NO PDF
+              ================================================= */}
+
+              {!activePdfUrl &&
+                !pdfLoading &&
+                !pdfLoadError && (
+
+                  <div className="
+                    rounded-xl
+                    border
+                    border-theme
+                    bg-theme-main/30
+                    p-4
+                    sm:p-5
+                  ">
+
+                    <div className="
+                      flex
+                      items-start
+                      gap-3
+                    ">
+
+                      <FileText className="
+                        w-5
+                        h-5
+                        text-theme-muted
+                        shrink-0
+                        mt-0.5
+                      " />
+
+                      <div>
+
+                        <div className="
+                          font-semibold
+                          text-theme-main
+                          text-sm
+                          sm:text-base
+                        ">
+                          Official PDF edition
+                          unavailable
+                        </div>
+
+                        <p className="
+                          mt-1
+                          text-sm
+                          text-theme-muted
+                          leading-relaxed
+                        ">
+                          This newsletter does
+                          not currently have an
+                          official PDF edition
+                          available.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                )}
+
+
+              {/* =================================================
+                  INTRO
               ================================================= */}
 
               <div className="
@@ -685,102 +2512,135 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
               ">
 
                 {activeNewsletter.introParagraphs.map(
-                  (paragraph, index) => (
+                  (
+                    paragraph,
+                    index
+                  ) => (
+
                     <p key={index}>
                       {paragraph}
                     </p>
+
                   )
                 )}
 
               </div>
+
 
               {/* =================================================
                   QUICK SUMMARY
               ================================================= */}
 
               {activeNewsletter.summaryTable && (
+
                 <div className="space-y-4 pt-1">
 
-                  <h3 className="font-serif text-xl sm:text-2xl text-theme-main font-semibold border-b border-theme pb-2.5">
+                  <h3 className="
+                    font-serif
+                    text-xl
+                    sm:text-2xl
+                    text-theme-main
+                    font-semibold
+                    border-b
+                    border-theme
+                    pb-2.5
+                  ">
                     Quick Summary
                   </h3>
 
-                  {/* Desktop / tablet table */}
 
-                  <div className="hidden sm:block overflow-x-auto border border-theme rounded-xl">
+                  <div className="
+                    hidden
+                    sm:block
+                    overflow-x-auto
+                    border
+                    border-theme
+                    rounded-xl
+                  ">
 
-                    <table className="w-full text-left text-base border-collapse">
+                    <table className="
+                      w-full
+                      text-left
+                      text-base
+                      border-collapse
+                    ">
 
                       <thead>
-                        <tr className="bg-theme-surface-hover border-b border-theme text-theme-muted uppercase font-medium text-xs sm:text-sm">
 
-                          <th className="py-3.5 px-4 w-1/4 font-semibold">
+                        <tr className="
+                          bg-theme-surface-hover
+                          border-b
+                          border-theme
+                          text-theme-muted
+                          uppercase
+                          font-medium
+                          text-xs
+                          sm:text-sm
+                        ">
+
+                          <th className="
+                            py-3.5
+                            px-4
+                            w-1/4
+                            font-semibold
+                          ">
                             Aspect
                           </th>
 
-                          <th className="py-3.5 px-4 w-3/4 font-semibold">
+                          <th className="
+                            py-3.5
+                            px-4
+                            w-3/4
+                            font-semibold
+                          ">
                             Details
                           </th>
 
                         </tr>
+
                       </thead>
 
-                      <tbody className="divide-y divide-theme-subtle text-theme-main">
 
-                        {activeNewsletter.summaryTable.how && (
-                          <tr>
+                      <tbody className="
+                        divide-y
+                        divide-theme-subtle
+                        text-theme-main
+                      ">
 
-                            <td className="py-4 px-4 font-semibold text-theme-brass align-top">
-                              How
-                            </td>
+                        {(
+                          [
+                            ['How', activeNewsletter.summaryTable.how],
+                            ['When', activeNewsletter.summaryTable.when],
+                            ['Where', activeNewsletter.summaryTable.where],
+                            ['Why', activeNewsletter.summaryTable.why],
+                          ] as const
+                        ).map(
+                          ([label, value]) =>
+                            value ? (
 
-                            <td className="py-4 px-4 leading-relaxed">
-                              {activeNewsletter.summaryTable.how}
-                            </td>
+                              <tr key={label}>
 
-                          </tr>
-                        )}
+                                <td className="
+                                  py-4
+                                  px-4
+                                  font-semibold
+                                  text-theme-brass
+                                  align-top
+                                ">
+                                  {label}
+                                </td>
 
-                        {activeNewsletter.summaryTable.when && (
-                          <tr>
+                                <td className="
+                                  py-4
+                                  px-4
+                                  leading-relaxed
+                                ">
+                                  {value}
+                                </td>
 
-                            <td className="py-4 px-4 font-semibold text-theme-brass align-top">
-                              When
-                            </td>
+                              </tr>
 
-                            <td className="py-4 px-4 leading-relaxed">
-                              {activeNewsletter.summaryTable.when}
-                            </td>
-
-                          </tr>
-                        )}
-
-                        {activeNewsletter.summaryTable.where && (
-                          <tr>
-
-                            <td className="py-4 px-4 font-semibold text-theme-brass align-top">
-                              Where
-                            </td>
-
-                            <td className="py-4 px-4 leading-relaxed">
-                              {activeNewsletter.summaryTable.where}
-                            </td>
-
-                          </tr>
-                        )}
-
-                        {activeNewsletter.summaryTable.why && (
-                          <tr>
-
-                            <td className="py-4 px-4 font-semibold text-theme-brass align-top">
-                              Why
-                            </td>
-
-                            <td className="py-4 px-4 leading-relaxed">
-                              {activeNewsletter.summaryTable.why}
-                            </td>
-
-                          </tr>
+                            ) : null
                         )}
 
                       </tbody>
@@ -789,130 +2649,211 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
 
                   </div>
 
-                  {/* Mobile cards */}
 
-                  <div className="sm:hidden space-y-3">
+                  <div className="
+                    sm:hidden
+                    space-y-3
+                  ">
 
-                    {activeNewsletter.summaryTable.how && (
-                      <div className="rounded-xl border border-theme bg-theme-main/30 p-4">
+                    {(
+                      [
+                        ['How', activeNewsletter.summaryTable.how],
+                        ['When', activeNewsletter.summaryTable.when],
+                        ['Where', activeNewsletter.summaryTable.where],
+                        ['Why', activeNewsletter.summaryTable.why],
+                      ] as const
+                    ).map(
+                      ([label, value]) =>
+                        value ? (
 
-                        <div className="text-xs font-medium uppercase tracking-wide text-theme-brass mb-2">
-                          How
-                        </div>
+                          <div
+                            key={label}
+                            className="
+                              rounded-xl
+                              border
+                              border-theme
+                              bg-theme-main/30
+                              p-4
+                            "
+                          >
 
-                        <div className="text-base leading-[1.7] text-theme-main">
-                          {activeNewsletter.summaryTable.how}
-                        </div>
+                            <div className="
+                              text-xs
+                              font-medium
+                              uppercase
+                              tracking-wide
+                              text-theme-brass
+                              mb-2
+                            ">
+                              {label}
+                            </div>
 
-                      </div>
-                    )}
+                            <div className="
+                              text-base
+                              leading-[1.7]
+                              text-theme-main
+                            ">
+                              {value}
+                            </div>
 
-                    {activeNewsletter.summaryTable.when && (
-                      <div className="rounded-xl border border-theme bg-theme-main/30 p-4">
+                          </div>
 
-                        <div className="text-xs font-medium uppercase tracking-wide text-theme-brass mb-2">
-                          When
-                        </div>
-
-                        <div className="text-base leading-[1.7] text-theme-main">
-                          {activeNewsletter.summaryTable.when}
-                        </div>
-
-                      </div>
-                    )}
-
-                    {activeNewsletter.summaryTable.where && (
-                      <div className="rounded-xl border border-theme bg-theme-main/30 p-4">
-
-                        <div className="text-xs font-medium uppercase tracking-wide text-theme-brass mb-2">
-                          Where
-                        </div>
-
-                        <div className="text-base leading-[1.7] text-theme-main">
-                          {activeNewsletter.summaryTable.where}
-                        </div>
-
-                      </div>
-                    )}
-
-                    {activeNewsletter.summaryTable.why && (
-                      <div className="rounded-xl border border-theme bg-theme-main/30 p-4">
-
-                        <div className="text-xs font-medium uppercase tracking-wide text-theme-brass mb-2">
-                          Why
-                        </div>
-
-                        <div className="text-base leading-[1.7] text-theme-main">
-                          {activeNewsletter.summaryTable.why}
-                        </div>
-
-                      </div>
+                        ) : null
                     )}
 
                   </div>
 
                 </div>
+
               )}
 
+
               {/* =================================================
-                  PROTECTION STEPS / RISK MANAGEMENT
+                  PROTECTION STEPS
               ================================================= */}
 
               {activeNewsletter.protectionSteps &&
-                activeNewsletter.protectionSteps.length > 0 && (
+                activeNewsletter.protectionSteps.length >
+                  0 && (
 
-                  <div className="space-y-7 pt-1">
+                  <div className="
+                    space-y-7
+                    pt-1
+                  ">
 
                     {activeNewsletter.protectionSteps.map(
-                      (section, index) => (
+                      (
+                        section,
+                        index
+                      ) => (
 
                         <div
                           key={index}
                           className="space-y-4"
                         >
 
-                          <h3 className="font-serif text-xl sm:text-2xl text-theme-main font-semibold border-b border-theme pb-2.5">
-                            {section.sectionTitle}
+                          <h3 className="
+                            font-serif
+                            text-xl
+                            sm:text-2xl
+                            text-theme-main
+                            font-semibold
+                            border-b
+                            border-theme
+                            pb-2.5
+                          ">
+                            {
+                              section.sectionTitle
+                            }
                           </h3>
 
+
                           {section.description && (
-                            <p className="text-base sm:text-[17px] text-theme-muted leading-[1.75]">
-                              {section.description}
+
+                            <p className="
+                              text-base
+                              sm:text-[17px]
+                              text-theme-muted
+                              leading-[1.75]
+                            ">
+                              {
+                                section.description
+                              }
                             </p>
+
                           )}
 
-                          <div className="grid grid-cols-1 gap-3">
+
+                          <div className="
+                            grid
+                            grid-cols-1
+                            gap-3
+                          ">
 
                             {section.items.map(
-                              (item, itemIndex) => (
+                              (
+                                item,
+                                itemIndex
+                              ) => (
 
                                 <div
-                                  key={itemIndex}
-                                  className="p-4 sm:p-5 rounded-xl bg-theme-main/40 border border-theme flex items-start gap-3.5"
+                                  key={
+                                    itemIndex
+                                  }
+                                  className="
+                                    p-4
+                                    sm:p-5
+                                    rounded-xl
+                                    bg-theme-main/40
+                                    border
+                                    border-theme
+                                    flex
+                                    items-start
+                                    gap-3.5
+                                  "
                                 >
 
                                   {item.step ? (
 
-                                    <span className="w-8 h-8 rounded-full bg-theme-brass/20 text-theme-brass font-medium text-sm flex items-center justify-center shrink-0 mt-0.5">
-                                      {item.step}
+                                    <span className="
+                                      w-8
+                                      h-8
+                                      rounded-full
+                                      bg-theme-brass/20
+                                      text-theme-brass
+                                      font-medium
+                                      text-sm
+                                      flex
+                                      items-center
+                                      justify-center
+                                      shrink-0
+                                    ">
+                                      {
+                                        item.step
+                                      }
                                     </span>
 
                                   ) : (
 
-                                    <CheckCircle2 className="w-5 h-5 text-theme-brass shrink-0 mt-1" />
+                                    <CheckCircle2 className="
+                                      w-5
+                                      h-5
+                                      text-theme-brass
+                                      shrink-0
+                                      mt-1
+                                    " />
 
                                   )}
 
-                                  <div className="space-y-2 text-base min-w-0">
+
+                                  <div className="
+                                    space-y-2
+                                    text-base
+                                    min-w-0
+                                  ">
 
                                     {item.title && (
-                                      <div className="font-semibold text-theme-main leading-snug">
-                                        {item.title}
+
+                                      <div className="
+                                        font-semibold
+                                        text-theme-main
+                                        leading-snug
+                                      ">
+                                        {
+                                          item.title
+                                        }
                                       </div>
+
                                     )}
 
-                                    <div className="text-theme-muted leading-[1.75] break-words">
-                                      {item.action}
+                                    <div className="
+                                      text-theme-muted
+                                      leading-[1.75]
+                                      break-words
+                                    ">
+                                      {
+                                        item.action
+                                      }
                                     </div>
 
                                   </div>
@@ -930,52 +2871,128 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                     )}
 
                   </div>
+
                 )}
+
 
               {/* =================================================
                   BEST PRACTICES
               ================================================= */}
 
               {activeNewsletter.bestPractices && (
-                <div className="space-y-4 pt-1">
 
-                  <h3 className="font-serif text-xl sm:text-2xl text-theme-main font-semibold border-b border-theme pb-2.5">
-                    {activeNewsletter.bestPractices.title}
+                <div className="
+                  space-y-4
+                  pt-1
+                ">
+
+                  <h3 className="
+                    font-serif
+                    text-xl
+                    sm:text-2xl
+                    text-theme-main
+                    font-semibold
+                    border-b
+                    border-theme
+                    pb-2.5
+                  ">
+                    {
+                      activeNewsletter
+                        .bestPractices
+                        .title
+                    }
                   </h3>
 
-                  {/* Desktop / tablet table */}
 
-                  <div className="hidden sm:block overflow-x-auto border border-theme rounded-xl">
+                  <div className="
+                    hidden
+                    sm:block
+                    overflow-x-auto
+                    border
+                    border-theme
+                    rounded-xl
+                  ">
 
-                    <table className="w-full text-left text-base border-collapse">
+                    <table className="
+                      w-full
+                      text-left
+                      text-base
+                      border-collapse
+                    ">
 
                       <thead>
-                        <tr className="bg-theme-surface-hover border-b border-theme text-theme-muted uppercase font-medium text-xs sm:text-sm">
 
-                          <th className="py-3.5 px-4 w-1/3 font-semibold">
+                        <tr className="
+                          bg-theme-surface-hover
+                          border-b
+                          border-theme
+                          text-theme-muted
+                          uppercase
+                          font-medium
+                          text-xs
+                          sm:text-sm
+                        ">
+
+                          <th className="
+                            py-3.5
+                            px-4
+                            w-1/3
+                            font-semibold
+                          ">
                             Practice
                           </th>
 
-                          <th className="py-3.5 px-4 w-2/3 font-semibold">
+                          <th className="
+                            py-3.5
+                            px-4
+                            w-2/3
+                            font-semibold
+                          ">
                             Why It Matters
                           </th>
 
                         </tr>
+
                       </thead>
 
-                      <tbody className="divide-y divide-theme-subtle text-theme-main">
+
+                      <tbody className="
+                        divide-y
+                        divide-theme-subtle
+                        text-theme-main
+                      ">
 
                         {activeNewsletter.bestPractices.items.map(
-                          (item, index) => (
+                          (
+                            item,
+                            index
+                          ) => (
 
-                            <tr key={index}>
+                            <tr
+                              key={index}
+                            >
 
-                              <td className="py-4 px-4 font-semibold text-theme-main align-top">
-                                {item.practice}
+                              <td className="
+                                py-4
+                                px-4
+                                font-semibold
+                                text-theme-main
+                                align-top
+                              ">
+                                {
+                                  item.practice
+                                }
                               </td>
 
-                              <td className="py-4 px-4 leading-relaxed text-theme-muted">
-                                {item.why}
+                              <td className="
+                                py-4
+                                px-4
+                                leading-relaxed
+                                text-theme-muted
+                              ">
+                                {
+                                  item.why
+                                }
                               </td>
 
                             </tr>
@@ -989,24 +3006,49 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
 
                   </div>
 
-                  {/* Mobile cards */}
 
-                  <div className="sm:hidden space-y-3">
+                  <div className="
+                    sm:hidden
+                    space-y-3
+                  ">
 
                     {activeNewsletter.bestPractices.items.map(
-                      (item, index) => (
+                      (
+                        item,
+                        index
+                      ) => (
 
                         <div
                           key={index}
-                          className="rounded-xl border border-theme bg-theme-main/30 p-4"
+                          className="
+                            rounded-xl
+                            border
+                            border-theme
+                            bg-theme-main/30
+                            p-4
+                          "
                         >
 
-                          <div className="font-semibold text-base text-theme-main leading-snug mb-2.5">
-                            {item.practice}
+                          <div className="
+                            font-semibold
+                            text-base
+                            text-theme-main
+                            leading-snug
+                            mb-2.5
+                          ">
+                            {
+                              item.practice
+                            }
                           </div>
 
-                          <div className="text-base text-theme-muted leading-[1.7]">
-                            {item.why}
+                          <div className="
+                            text-base
+                            text-theme-muted
+                            leading-[1.7]
+                          ">
+                            {
+                              item.why
+                            }
                           </div>
 
                         </div>
@@ -1017,35 +3059,76 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                   </div>
 
                 </div>
+
               )}
+
 
               {/* =================================================
                   ADDITIONAL POINTS
               ================================================= */}
 
               {activeNewsletter.additionalPoints && (
-                <div className="space-y-4 pt-1">
 
-                  <h3 className="font-serif text-xl sm:text-2xl text-theme-main font-semibold border-b border-theme pb-2.5">
-                    {activeNewsletter.additionalPoints.title ||
-                      'Additional Security Measures'}
+                <div className="
+                  space-y-4
+                  pt-1
+                ">
+
+                  <h3 className="
+                    font-serif
+                    text-xl
+                    sm:text-2xl
+                    text-theme-main
+                    font-semibold
+                    border-b
+                    border-theme
+                    pb-2.5
+                  ">
+                    {
+                      activeNewsletter
+                        .additionalPoints
+                        .title ||
+                      'Additional Security Measures'
+                    }
                   </h3>
 
-                  <ul className="space-y-4 text-base sm:text-[17px] text-theme-muted">
+
+                  <ul className="
+                    space-y-4
+                    text-base
+                    sm:text-[17px]
+                    text-theme-muted
+                  ">
 
                     {activeNewsletter.additionalPoints.items.map(
-                      (point, index) => (
+                      (
+                        point,
+                        index
+                      ) => (
 
                         <li
                           key={index}
-                          className="flex items-start gap-3"
+                          className="
+                            flex
+                            items-start
+                            gap-3
+                          "
                         >
 
-                          <span className="text-theme-brass font-bold shrink-0 mt-0.5">
+                          <span className="
+                            text-theme-brass
+                            font-bold
+                            shrink-0
+                            mt-0.5
+                          ">
                             •
                           </span>
 
-                          <span className="leading-[1.75] min-w-0 break-words">
+                          <span className="
+                            leading-[1.75]
+                            min-w-0
+                            break-words
+                          ">
                             {point}
                           </span>
 
@@ -1057,41 +3140,90 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                   </ul>
 
                 </div>
+
               )}
 
+
               {/* =================================================
-                  SOURCES FOOTER
+                  SOURCES
               ================================================= */}
 
               {activeNewsletter.sources &&
-                activeNewsletter.sources.length > 0 && (
+                activeNewsletter.sources.length >
+                  0 && (
 
-                  <div className="bg-theme-surface-hover border border-theme rounded-xl p-4 sm:p-5 space-y-4">
+                  <div className="
+                    bg-theme-surface-hover
+                    border
+                    border-theme
+                    rounded-xl
+                    p-4
+                    sm:p-5
+                    space-y-4
+                  ">
 
-                    <div className="text-xs sm:text-sm uppercase tracking-wide text-theme-brass font-semibold">
-                      Sources & Documentation
+                    <div className="
+                      text-xs
+                      sm:text-sm
+                      uppercase
+                      tracking-wide
+                      text-theme-brass
+                      font-semibold
+                    ">
+                      Sources &
+                      Documentation
                     </div>
 
-                    <ul className="space-y-4 text-sm sm:text-base text-theme-muted">
+
+                    <ul className="
+                      space-y-4
+                      text-sm
+                      sm:text-base
+                      text-theme-muted
+                    ">
 
                       {activeNewsletter.sources.map(
-                        (source, index) => (
+                        (
+                          source,
+                          index
+                        ) => (
 
                           <li
                             key={index}
-                            className="flex items-start gap-3"
+                            className="
+                              flex
+                              items-start
+                              gap-3
+                            "
                           >
 
-                            <ExternalLink className="w-4 h-4 text-theme-brass shrink-0 mt-1" />
+                            <ExternalLink className="
+                              w-4
+                              h-4
+                              text-theme-brass
+                              shrink-0
+                              mt-1
+                            " />
 
-                            <div className="min-w-0 leading-[1.7] break-words">
+                            <div className="
+                              min-w-0
+                              leading-[1.7]
+                              break-words
+                            ">
 
-                              <strong className="text-theme-main font-semibold">
-                                {source.name}:{' '}
+                              <strong className="
+                                text-theme-main
+                                font-semibold
+                              ">
+                                {
+                                  source.name
+                                }:{' '}
                               </strong>
 
                               <span>
-                                {source.details}
+                                {
+                                  source.details
+                                }
                               </span>
 
                             </div>
@@ -1104,34 +3236,65 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                     </ul>
 
                   </div>
+
                 )}
 
+
               {/* =================================================
-                  ARTICLE FOOTER
+                  FOOTER
               ================================================= */}
 
-              <div className="pt-7 sm:pt-9 border-t border-theme-subtle flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="
+                pt-7
+                sm:pt-9
+                border-t
+                border-theme-subtle
+                flex
+                flex-col
+                gap-5
+                sm:flex-row
+                sm:items-center
+                sm:justify-between
+              ">
 
-                {/* Brand */}
-
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="
+                  flex
+                  items-center
+                  gap-3
+                  min-w-0
+                ">
 
                   <BrandMark
                     size={28}
                     variant="brass"
                   />
 
-                  <div className="text-sm sm:text-base font-serif text-theme-main">
-                    CryptoConfidant.com Confidential Intelligence
+                  <div className="
+                    text-sm
+                    sm:text-base
+                    font-serif
+                    text-theme-main
+                  ">
+                    CryptoConfidant.com
+                    Confidential
+                    Intelligence
                   </div>
 
                 </div>
 
-                {/* Previous / Next Navigation */}
 
-                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                <div className="
+                  flex
+                  items-center
+                  justify-between
+                  sm:justify-end
+                  gap-2
+                  w-full
+                  sm:w-auto
+                ">
 
                   {prevNewsletter ? (
+
                     <button
                       onClick={() =>
                         handleSelectNewsletter(
@@ -1157,26 +3320,28 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                         rounded-xl
                         bg-theme-surface
                         hover:bg-theme-surface-hover
-                        transition-colors
                         cursor-pointer
-                        touch-manipulation
                       "
-                      title={`Older issue: ${prevNewsletter.title}`}
-                      aria-label={`Older issue ${prevNewsletter.issueNumber}`}
                     >
 
-                      <ArrowLeft className="w-4 h-4 shrink-0" />
+                      <ArrowLeft className="w-4 h-4" />
 
-                      <span>
-                        {prevNewsletter.issueNumber}
-                      </span>
+                      {
+                        prevNewsletter
+                          .issueNumber
+                      }
 
                     </button>
+
                   ) : (
+
                     <div className="hidden sm:block" />
+
                   )}
 
+
                   {nextNewsletter ? (
+
                     <button
                       onClick={() =>
                         handleSelectNewsletter(
@@ -1202,23 +3367,23 @@ export const NewslettersPage: React.FC<NewslettersPageProps> = ({
                         rounded-xl
                         bg-theme-surface
                         hover:bg-theme-surface-hover
-                        transition-colors
                         cursor-pointer
-                        touch-manipulation
                       "
-                      title={`Newer issue: ${nextNewsletter.title}`}
-                      aria-label={`Newer issue ${nextNewsletter.issueNumber}`}
                     >
 
-                      <span>
-                        {nextNewsletter.issueNumber}
-                      </span>
+                      {
+                        nextNewsletter
+                          .issueNumber
+                      }
 
-                      <ArrowRight className="w-4 h-4 shrink-0" />
+                      <ArrowRight className="w-4 h-4" />
 
                     </button>
+
                   ) : (
+
                     <div className="hidden sm:block" />
+
                   )}
 
                 </div>
