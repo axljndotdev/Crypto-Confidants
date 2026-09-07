@@ -25,8 +25,8 @@ export const defaultSiteContent: SiteContent = {
     subparagraph: "Crypto Confidants helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.",
     primaryCta: 'Start a conversation',
     secondaryCta: 'Read Newsletter',
-    pillar1: 'Access',
-    pillar2: 'Flexibility',
+    pillar1: 'Flexibility',
+    pillar2: 'Access',
     pillar3: 'Sovereignty',
   },
   whyWeExist: {
