@@ -143,9 +143,6 @@ export interface SiteContent {
   pricing: {
     headline: string;
     subheadline: string;
-    headerEyebrow?: string;
-    headerTitle?: string;
-    headerSubtitle?: string;
     tier1TopLabel: string;
     tier1Name: string;
     tier1Price: string;

@@ -13,8 +13,7 @@ import { ConsultationModal } from './components/ConsultationModal';
 import { Footer } from './components/Footer';
 import { AdminLoginPage } from './components/admin/AdminLoginPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { getActiveSession, setActiveSession, getStoredSiteContent } from './lib/contentStore';
-import { fetchRemoteSiteContent, isRemotePublishConfigured } from './lib/publishClient';
+import { getActiveSession, setActiveSession, getStoredSiteContent, initGlobalFirestoreSync } from './lib/contentStore';
 
 function getInitialPage(): 'home' | 'pricing' | 'newsletters' | 'admin' | 'admin-login' {
   if (typeof window === 'undefined') return 'home';
@@ -44,22 +43,27 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Start global cloud Firestore real-time synchronization
+  useEffect(() => {
+    const unsubscribe = initGlobalFirestoreSync();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // Synchronize site content updates from admin dashboard or cloud Firestore
+  useEffect(() => {
+    const handleContentUpdated = () => {
+      setSiteContent(getStoredSiteContent());
+    };
+    window.addEventListener('site-content-updated', handleContentUpdated);
+    return () => {
+      window.removeEventListener('site-content-updated', handleContentUpdated);
+    };
+  }, []);
+
   // Global route checker for path, hash, and query changes
   useEffect(() => {
-    // If a remote publish backend is configured, attempt to fetch remote site content
-    (async () => {
-      try {
-        if (typeof window !== 'undefined' && isRemotePublishConfigured()) {
-          const remote = await fetchRemoteSiteContent();
-          if (remote) {
-            setSiteContent(remote);
-          }
-        }
-      } catch (err) {
-        // ignore
-      }
-    })();
-
     const syncRoute = () => {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();

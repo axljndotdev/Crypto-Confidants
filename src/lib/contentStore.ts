@@ -1,5 +1,16 @@
 import { SiteContent, AdminUser } from '../types';
 import { NEWSLETTERS, Newsletter } from '../data/newsletters';
+import { db } from './firebase';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  collection, 
+  getDocs, 
+  onSnapshot, 
+  deleteDoc, 
+  writeBatch 
+} from 'firebase/firestore';
 
 const SITE_CONTENT_KEY = 'cc_site_content_v2';
 const NEWSLETTERS_KEY = 'cc_newsletters_v1';
@@ -10,7 +21,7 @@ export const defaultSiteContent: SiteContent = {
   hero: {
     eyebrow: 'GLOBAL EDUCATION, A CONFIDENTIAL EAR',
     headline: "Your wealth shouldn't depend on staying in a government's good graces.",
-    subparagraph: " helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.",
+    subparagraph: "Crypto Confidants helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.",
     primaryCta: 'Start a conversation',
     secondaryCta: 'Read Newsletter',
     pillar1: 'Access',
@@ -133,36 +144,6 @@ export const defaultAdminUsers: (AdminUser & { password?: string })[] = [
   },
 ];
 
-export function getStoredSiteContent(): SiteContent {
-  if (typeof window === 'undefined') return defaultSiteContent;
-  try {
-    // Clear out old v1 storage that had fabricated copy if present
-    if (localStorage.getItem('cc_site_content_v1')) {
-      localStorage.removeItem('cc_site_content_v1');
-    }
-    const raw = localStorage.getItem(SITE_CONTENT_KEY);
-    if (!raw) return defaultSiteContent;
-    const parsed = JSON.parse(raw);
-    return {
-      hero: { ...defaultSiteContent.hero, ...(parsed.hero || {}) },
-      whyWeExist: { ...defaultSiteContent.whyWeExist, ...(parsed.whyWeExist || {}) },
-      whoWeHelp: { ...defaultSiteContent.whoWeHelp, ...(parsed.whoWeHelp || {}) },
-      whatWeOffer: { ...defaultSiteContent.whatWeOffer, ...(parsed.whatWeOffer || {}) },
-      comms: { ...defaultSiteContent.comms, ...(parsed.comms || {}) },
-      startHere: { ...defaultSiteContent.startHere, ...(parsed.startHere || {}) },
-      pricing: { ...defaultSiteContent.pricing, ...(parsed.pricing || {}) },
-    };
-  } catch {
-    return defaultSiteContent;
-  }
-}
-
-export function saveStoredSiteContent(content: SiteContent): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(SITE_CONTENT_KEY, JSON.stringify(content));
-  window.dispatchEvent(new Event('site-content-updated'));
-}
-
 export const MONTHS_SHORT = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
   'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
@@ -247,14 +228,36 @@ export function sortNewslettersLatestFirst(items: Newsletter[]): Newsletter[] {
   });
 }
 
+// -------------------------------------------------------------
+// Synchronous Local Cache Access (Fast initial render)
+// -------------------------------------------------------------
+
+export function getStoredSiteContent(): SiteContent {
+  if (typeof window === 'undefined') return defaultSiteContent;
+  try {
+    const raw = localStorage.getItem(SITE_CONTENT_KEY);
+    if (!raw) return defaultSiteContent;
+    const parsed = JSON.parse(raw);
+    return {
+      hero: { ...defaultSiteContent.hero, ...(parsed.hero || {}) },
+      whyWeExist: { ...defaultSiteContent.whyWeExist, ...(parsed.whyWeExist || {}) },
+      whoWeHelp: { ...defaultSiteContent.whoWeHelp, ...(parsed.whoWeHelp || {}) },
+      whatWeOffer: { ...defaultSiteContent.whatWeOffer, ...(parsed.whatWeOffer || {}) },
+      comms: { ...defaultSiteContent.comms, ...(parsed.comms || {}) },
+      startHere: { ...defaultSiteContent.startHere, ...(parsed.startHere || {}) },
+      pricing: { ...defaultSiteContent.pricing, ...(parsed.pricing || {}) },
+    };
+  } catch {
+    return defaultSiteContent;
+  }
+}
+
 export function getStoredNewsletters(): Newsletter[] {
   if (typeof window === 'undefined') return sortNewslettersLatestFirst(NEWSLETTERS);
   try {
     const raw = localStorage.getItem(NEWSLETTERS_KEY);
     if (!raw) {
-      const sorted = sortNewslettersLatestFirst(NEWSLETTERS);
-      localStorage.setItem(NEWSLETTERS_KEY, JSON.stringify(sorted));
-      return sorted;
+      return sortNewslettersLatestFirst(NEWSLETTERS);
     }
     const parsed = JSON.parse(raw);
     return sortNewslettersLatestFirst(Array.isArray(parsed) ? parsed : NEWSLETTERS);
@@ -263,31 +266,15 @@ export function getStoredNewsletters(): Newsletter[] {
   }
 }
 
-export function saveStoredNewsletters(newsletters: Newsletter[]): void {
-  if (typeof window === 'undefined') return;
-  const sorted = sortNewslettersLatestFirst(newsletters);
-  localStorage.setItem(NEWSLETTERS_KEY, JSON.stringify(sorted));
-  window.dispatchEvent(new Event('newsletters-updated'));
-}
-
 export function getStoredAdminUsers(): (AdminUser & { password?: string })[] {
   if (typeof window === 'undefined') return defaultAdminUsers;
   try {
     const raw = localStorage.getItem(ADMIN_USERS_KEY);
-    if (!raw) {
-      localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(defaultAdminUsers));
-      return defaultAdminUsers;
-    }
+    if (!raw) return defaultAdminUsers;
     return JSON.parse(raw);
   } catch {
     return defaultAdminUsers;
   }
-}
-
-export function saveStoredAdminUsers(users: (AdminUser & { password?: string })[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(users));
-  window.dispatchEvent(new Event('admin-users-updated'));
 }
 
 export function getActiveSession(): AdminUser | null {
@@ -309,4 +296,194 @@ export function setActiveSession(user: AdminUser | null): void {
     localStorage.removeItem(CURRENT_SESSION_KEY);
   }
   window.dispatchEvent(new Event('auth-state-changed'));
+}
+
+// -------------------------------------------------------------
+// Global Cloud Persistence (Firebase Firestore + Real-time Sync)
+// -------------------------------------------------------------
+
+export async function saveStoredSiteContent(content: SiteContent): Promise<void> {
+  // Update local cache and fire immediate event
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(SITE_CONTENT_KEY, JSON.stringify(content));
+    window.dispatchEvent(new Event('site-content-updated'));
+  }
+
+  // Push to Cloud Firestore for global persistence across all devices
+  try {
+    const contentRef = doc(db, 'siteContent', 'global');
+    await setDoc(contentRef, content, { merge: true });
+  } catch (err) {
+    console.error('Error saving site content to Firestore:', err);
+  }
+}
+
+export async function saveSingleNewsletter(newsletter: Newsletter): Promise<void> {
+  const current = getStoredNewsletters();
+  const exists = current.some((n) => n.id === newsletter.id);
+  const updated = exists
+    ? current.map((n) => (n.id === newsletter.id ? newsletter : n))
+    : [newsletter, ...current];
+  const sorted = sortNewslettersLatestFirst(updated);
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(NEWSLETTERS_KEY, JSON.stringify(sorted));
+    window.dispatchEvent(new Event('newsletters-updated'));
+  }
+
+  try {
+    const newsRef = doc(db, 'newsletters', newsletter.id);
+    await setDoc(newsRef, newsletter, { merge: true });
+  } catch (err) {
+    console.error('Error saving newsletter to Firestore:', err);
+  }
+}
+
+export async function saveStoredNewsletters(newsletters: Newsletter[]): Promise<void> {
+  const sorted = sortNewslettersLatestFirst(newsletters);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(NEWSLETTERS_KEY, JSON.stringify(sorted));
+    window.dispatchEvent(new Event('newsletters-updated'));
+  }
+
+  try {
+    const batch = writeBatch(db);
+    for (const item of sorted) {
+      const newsRef = doc(db, 'newsletters', item.id);
+      batch.set(newsRef, item, { merge: true });
+    }
+    await batch.commit();
+  } catch (err) {
+    console.error('Error batch-saving newsletters to Firestore:', err);
+  }
+}
+
+export async function deleteNewsletterFromFirestore(id: string): Promise<void> {
+  const current = getStoredNewsletters();
+  const updated = current.filter((n) => n.id !== id);
+  const sorted = sortNewslettersLatestFirst(updated);
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(NEWSLETTERS_KEY, JSON.stringify(sorted));
+    window.dispatchEvent(new Event('newsletters-updated'));
+  }
+
+  try {
+    await deleteDoc(doc(db, 'newsletters', id));
+  } catch (err) {
+    console.error('Error deleting newsletter from Firestore:', err);
+  }
+}
+
+export async function saveStoredAdminUsers(users: (AdminUser & { password?: string })[]): Promise<void> {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(users));
+    window.dispatchEvent(new Event('admin-users-updated'));
+  }
+
+  try {
+    const batch = writeBatch(db);
+    for (const user of users) {
+      const userRef = doc(db, 'adminUsers', user.id);
+      batch.set(userRef, user, { merge: true });
+    }
+    await batch.commit();
+  } catch (err) {
+    console.error('Error saving admin users to Firestore:', err);
+  }
+}
+
+// -------------------------------------------------------------
+// Real-time Cloud Subscriptions & Auto-Seeding
+// -------------------------------------------------------------
+
+let isSyncInitialized = false;
+
+export function initGlobalFirestoreSync(): () => void {
+  if (typeof window === 'undefined' || isSyncInitialized) return () => {};
+  isSyncInitialized = true;
+
+  const unsubscribers: (() => void)[] = [];
+
+  // 1. Listen to Site Content
+  try {
+    const contentRef = doc(db, 'siteContent', 'global');
+    const unsubContent = onSnapshot(contentRef, async (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data() as SiteContent;
+        localStorage.setItem(SITE_CONTENT_KEY, JSON.stringify(data));
+        window.dispatchEvent(new Event('site-content-updated'));
+      } else {
+        // Seed initial site content to Firestore if not yet present
+        const initial = getStoredSiteContent();
+        await setDoc(contentRef, initial, { merge: true });
+      }
+    }, (err) => {
+      console.warn('Firestore siteContent sync notice:', err.message);
+    });
+    unsubscribers.push(unsubContent);
+  } catch (e) {
+    console.warn('Failed to attach siteContent listener:', e);
+  }
+
+  // 2. Listen to Newsletters Collection
+  try {
+    const newsCol = collection(db, 'newsletters');
+    const unsubNews = onSnapshot(newsCol, async (snapshot) => {
+      if (!snapshot.empty) {
+        const items: Newsletter[] = [];
+        snapshot.forEach((d) => {
+          items.push(d.data() as Newsletter);
+        });
+        const sorted = sortNewslettersLatestFirst(items);
+        localStorage.setItem(NEWSLETTERS_KEY, JSON.stringify(sorted));
+        window.dispatchEvent(new Event('newsletters-updated'));
+      } else {
+        // Seed default newsletters into Firestore
+        const defaultItems = sortNewslettersLatestFirst(NEWSLETTERS);
+        const batch = writeBatch(db);
+        for (const item of defaultItems) {
+          batch.set(doc(db, 'newsletters', item.id), item, { merge: true });
+        }
+        await batch.commit();
+      }
+    }, (err) => {
+      console.warn('Firestore newsletters sync notice:', err.message);
+    });
+    unsubscribers.push(unsubNews);
+  } catch (e) {
+    console.warn('Failed to attach newsletters listener:', e);
+  }
+
+  // 3. Listen to Admin Users
+  try {
+    const usersCol = collection(db, 'adminUsers');
+    const unsubUsers = onSnapshot(usersCol, async (snapshot) => {
+      if (!snapshot.empty) {
+        const users: (AdminUser & { password?: string })[] = [];
+        snapshot.forEach((d) => {
+          users.push(d.data() as any);
+        });
+        localStorage.setItem(ADMIN_USERS_KEY, JSON.stringify(users));
+        window.dispatchEvent(new Event('admin-users-updated'));
+      } else {
+        // Seed default admin accounts
+        const batch = writeBatch(db);
+        for (const user of defaultAdminUsers) {
+          batch.set(doc(db, 'adminUsers', user.id), user, { merge: true });
+        }
+        await batch.commit();
+      }
+    }, (err) => {
+      console.warn('Firestore adminUsers sync notice:', err.message);
+    });
+    unsubscribers.push(unsubUsers);
+  } catch (e) {
+    console.warn('Failed to attach adminUsers listener:', e);
+  }
+
+  return () => {
+    unsubscribers.forEach((unsub) => unsub());
+    isSyncInitialized = false;
+  };
 }

@@ -16,9 +16,7 @@ import {
   Download,
   Eye,
   Paperclip,
-  Loader2,
-  FileX,
-  AlertTriangle
+  Loader2
 } from 'lucide-react';
 import { AdminUser, SiteContent } from '../../types';
 import { Newsletter } from '../../data/newsletters';
@@ -27,19 +25,21 @@ import {
   saveStoredSiteContent, 
   getStoredNewsletters, 
   saveStoredNewsletters, 
+  saveSingleNewsletter,
+  deleteNewsletterFromFirestore,
   getStoredAdminUsers, 
   saveStoredAdminUsers,
   formatNewsletterDate,
   sortNewslettersLatestFirst,
   getIssueNumberNumeric
 } from '../../lib/contentStore';
-import { publishSiteContentRemote, exportSiteContentAsFile, isRemotePublishConfigured } from '../../lib/publishClient';
 import { 
   savePdfToIndexedDb, 
   getPdfBlobUrl, 
   deletePdfFromIndexedDb, 
   formatFileSize 
 } from '../../lib/pdfStorage';
+
 interface AdminDashboardProps {
   currentUser: AdminUser;
   onLogout: () => void;
@@ -67,7 +67,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newUserRole, setNewUserRole] = useState<'owner' | 'editor'>('editor');
 
   const pdfFileInputRef = useRef<HTMLInputElement | null>(null);
-  const pdfImportInputRef = useRef<HTMLInputElement | null>(null);
   const [isDraggingPdf, setIsDraggingPdf] = useState(false);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
 
@@ -79,104 +78,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleStartEditIssue = async (issue: Newsletter) => {
     setEditingIssue(issue);
     setIsCreatingNew(false);
-
-    // Always fetch fresh live blob from IndexedDB to avoid stale/expired blob URLs across page reloads
-    const storedPdf = await getPdfBlobUrl(issue.id);
-    if (storedPdf) {
-      setEditingIssue((prev) => (prev && prev.id === issue.id ? {
-        ...prev,
-        pdfUrl: storedPdf.blobUrl,
-        pdfFileName: storedPdf.fileName || prev.pdfFileName,
-        pdfFileSize: storedPdf.fileSize || prev.pdfFileSize,
-      } : prev));
-    } else if (issue.pdfUrl && issue.pdfUrl.startsWith('blob:')) {
-      // If issue had an expired blob URL and no file in IndexedDB, reset it cleanly
-      setEditingIssue((prev) => (prev && prev.id === issue.id ? {
-        ...prev,
-        pdfUrl: undefined,
-        pdfFileName: undefined,
-        pdfFileSize: undefined,
-      } : prev));
+    if (!issue.pdfUrl) {
+      const storedPdf = await getPdfBlobUrl(issue.id);
+      if (storedPdf) {
+        setEditingIssue((prev) => prev && prev.id === issue.id ? {
+          ...prev,
+          pdfUrl: storedPdf.blobUrl,
+          pdfFileName: storedPdf.fileName,
+          pdfFileSize: storedPdf.fileSize,
+        } : prev);
+      }
     }
   };
 
-  const handlePdfUploadFile = async (file: File, targetIssue?: Newsletter | null) => {
-    const activeIssue = targetIssue || editingIssue;
-    if (!activeIssue) return;
+  const handlePdfUploadFile = async (file: File) => {
+    if (!editingIssue) return;
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       alert('Please upload a valid PDF document (.pdf).');
       return;
     }
-
     setIsUploadingPdf(true);
     try {
-      let pdfUrl: string | undefined;
-      let pdfFileName = file.name;
-      let pdfFileSize = formatFileSize(file.size);
-
-      try {
-        const saved = await savePdfToIndexedDb(activeIssue.id, file);
-        pdfUrl = saved.blobUrl;
-        pdfFileName = saved.fileName;
-        pdfFileSize = saved.fileSize;
-      } catch (err) {
-        console.error('Error saving PDF:', err);
-        pdfUrl = URL.createObjectURL(file);
-      }
-
-      const cleanTitle = activeIssue.title.trim() ||
-        file.name
-          .replace(/\.pdf$/i, '')
-          .replace(/[-_]+/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-      const updatedIssue: Newsletter = {
-        ...activeIssue,
-        title: cleanTitle,
-        pdfUrl,
-        pdfFileName,
-        pdfFileSize,
-        introParagraphs: activeIssue.introParagraphs?.filter(p => p.trim()).length
-          ? activeIssue.introParagraphs
-          : ['Official intelligence dispatch and security advisory.'],
-      };
-
-      setEditingIssue(updatedIssue);
-      flashMessage(`PDF attached: ${file.name}`);
+      const saved = await savePdfToIndexedDb(editingIssue.id, file);
+      setEditingIssue({
+        ...editingIssue,
+        pdfUrl: saved.blobUrl,
+        pdfFileName: saved.fileName,
+        pdfFileSize: saved.fileSize,
+      });
+      flashMessage(`PDF attached: ${saved.fileName} (${saved.fileSize})`);
     } catch (err) {
-      console.error('Error processing PDF:', err);
+      console.error('Error saving PDF:', err);
+      const fallbackUrl = URL.createObjectURL(file);
+      const fallbackSize = formatFileSize(file.size);
+      setEditingIssue({
+        ...editingIssue,
+        pdfUrl: fallbackUrl,
+        pdfFileName: file.name,
+        pdfFileSize: fallbackSize,
+      });
       flashMessage(`PDF attached: ${file.name}`);
     } finally {
       setIsUploadingPdf(false);
-    }
-  };
-
-  const handleImportPdfDirect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const maxNum = newsletters.reduce((max, n) => Math.max(max, getIssueNumberNumeric(n.issueNumber)), 0);
-      const nextNum = (maxNum + 1).toString().padStart(2, '0');
-      const cleanTitle = file.name
-        .replace(/\.pdf$/i, '')
-        .replace(/[-_]+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      const placeholderIssue: Newsletter = {
-        id: `newsletter-${Date.now()}`,
-        issueNumber: `Newsletter ${nextNum}`,
-        title: cleanTitle || `Newsletter ${nextNum}`,
-        date: formatNewsletterDate(new Date().toISOString()),
-        category: 'Hardware Security',
-        readTime: '5 min read',
-        introParagraphs: ['Official intelligence dispatch and security advisory.'],
-        sources: [],
-      };
-      setEditingIssue(placeholderIssue);
-      setIsCreatingNew(true);
-      await handlePdfUploadFile(file, placeholderIssue);
-      e.target.value = '';
     }
   };
 
@@ -194,86 +137,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleHardDeletePdf = async (issueId: string) => {
-    const target = newsletters.find((n) => n.id === issueId) || (editingIssue?.id === issueId ? editingIssue : null);
-    const title = target?.title || target?.issueNumber || 'this newsletter';
-
-    const confirmed = window.confirm(
-      `PERMANENT HARD DELETION WARNING:\n\nAre you sure you want to permanently delete the attached PDF for "${title}"?\n\nThis will completely purge the PDF binary from IndexedDB database storage immediately and update the newsletter. This action CANNOT be undone.`
-    );
-    if (!confirmed) return;
-
-    try {
-      // 1. Permanently delete from IndexedDB storage
-      await deletePdfFromIndexedDb(issueId);
-
-      // 2. Immediately update newsletters list & persist to storage (NO soft deletion)
-      const updatedList = newsletters.map((n) => {
-        if (n.id === issueId) {
-          return {
-            ...n,
-            pdfUrl: undefined,
-            pdfFileName: undefined,
-            pdfFileSize: undefined,
-          };
-        }
-        return n;
-      });
-
-      setNewsletters(updatedList);
-      saveStoredNewsletters(updatedList);
-
-      // 3. If currently editing this issue, update form state immediately
-      if (editingIssue && editingIssue.id === issueId) {
-        if (editingIssue.pdfUrl && editingIssue.pdfUrl.startsWith('blob:')) {
-          try {
-            URL.revokeObjectURL(editingIssue.pdfUrl);
-          } catch {
-            // ignore
-          }
-        }
-        setEditingIssue({
-          ...editingIssue,
-          pdfUrl: undefined,
-          pdfFileName: undefined,
-          pdfFileSize: undefined,
-        });
-      }
-
-      flashMessage(`PDF document for "${title}" was permanently hard-deleted from storage.`);
-    } catch (err) {
-      console.error('Failed to hard delete PDF from storage:', err);
-      alert('Error during hard deletion of PDF. Please try again.');
-    }
+  const handleRemovePdf = async () => {
+    if (!editingIssue) return;
+    await deletePdfFromIndexedDb(editingIssue.id);
+    setEditingIssue({
+      ...editingIssue,
+      pdfUrl: undefined,
+      pdfFileName: undefined,
+      pdfFileSize: undefined,
+    });
+    flashMessage('PDF attachment removed.');
   };
 
-  const handleSaveSiteCopy = (e: React.FormEvent) => {
+  const handleSaveSiteCopy = async (e: React.FormEvent) => {
     e.preventDefault();
-    saveStoredSiteContent(siteContent);
-    flashMessage('Site copy updated! Changes are live immediately.');
+    await saveStoredSiteContent(siteContent);
+    flashMessage('Site copy updated and published globally to cloud database!');
   };
 
-  const handlePublishRemote = async () => {
-    // Persist locally first
-    saveStoredSiteContent(siteContent);
-    flashMessage('Publishing to remote...');
-
-    if (!isRemotePublishConfigured()) {
-      flashMessage('No remote publish endpoint configured — exporting JSON instead.');
-      exportSiteContentAsFile(siteContent);
-      return;
-    }
-
-    const res = await publishSiteContentRemote(siteContent);
-    if (res.ok) {
-      flashMessage('Remote publish succeeded.');
-    } else {
-      console.error('Remote publish failed', res);
-      flashMessage(`Remote publish failed: ${res.error || res.status}`);
-    }
-  };
-
-  const handleSaveNewsletter = () => {
+  const handleSaveNewsletter = async () => {
     if (!editingIssue) return;
     
     const formattedDate = formatNewsletterDate(editingIssue.date) || editingIssue.date;
@@ -282,51 +164,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       date: formattedDate,
     };
 
-    let updatedList: Newsletter[];
-    const exists = newsletters.some((n) => n.id === normalizedIssue.id);
-
-    if (exists) {
-      updatedList = newsletters.map((n) => (n.id === normalizedIssue.id ? normalizedIssue : n));
-    } else {
-      updatedList = [normalizedIssue, ...newsletters];
-    }
-
-    const sorted = sortNewslettersLatestFirst(updatedList);
-    setNewsletters(sorted);
-    saveStoredNewsletters(sorted);
+    await saveSingleNewsletter(normalizedIssue);
+    const refreshed = getStoredNewsletters();
+    setNewsletters(refreshed);
     setEditingIssue(null);
     setIsCreatingNew(false);
-    flashMessage(`Newsletter "${editingIssue.title}" saved successfully!`);
+    flashMessage(`Newsletter "${editingIssue.title || normalizedIssue.issueNumber}" published globally!`);
   };
 
   const handleDeleteNewsletter = async (id: string) => {
-    const target = newsletters.find((n) => n.id === id);
-    const title = target?.title || target?.issueNumber || 'this newsletter issue';
-
-    const confirmed = window.confirm(
-      `PERMANENT HARD DELETION WARNING:\n\nAre you sure you want to permanently delete "${title}" and any attached PDF from storage?\n\nThis will completely purge the newsletter record and its PDF binary from storage. This action CANNOT be undone.`
-    );
-    if (!confirmed) return;
-
-    try {
-      // 1. Permanently purge the PDF binary from IndexedDB
-      await deletePdfFromIndexedDb(id);
-
-      // 2. Remove newsletter record and persist to storage
-      const updated = newsletters.filter((n) => n.id !== id);
-      const sorted = sortNewslettersLatestFirst(updated);
-      setNewsletters(sorted);
-      saveStoredNewsletters(sorted);
-
-      if (editingIssue?.id === id) {
-        setEditingIssue(null);
-        setIsCreatingNew(false);
-      }
-      flashMessage(`"${title}" and attached assets were permanently deleted.`);
-    } catch (err) {
-      console.error('Error deleting newsletter:', err);
-      alert('Error during newsletter deletion. Please try again.');
+    if (!window.confirm('Delete this newsletter issue?')) return;
+    await deleteNewsletterFromFirestore(id);
+    const refreshed = getStoredNewsletters();
+    setNewsletters(refreshed);
+    if (editingIssue?.id === id) {
+      setEditingIssue(null);
+      setIsCreatingNew(false);
     }
+    flashMessage('Newsletter removed from cloud database.');
   };
 
   const handleStartNewNewsletter = () => {
@@ -353,7 +208,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setIsCreatingNew(true);
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUserEmail) return;
 
@@ -369,16 +224,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     const updated = [...adminUsers, user];
     setAdminUsers(updated);
-    saveStoredAdminUsers(updated);
+    await saveStoredAdminUsers(updated);
     setNewUserEmail('');
     setNewUserName('');
-    flashMessage(`Staff account created for ${user.email}`);
+    flashMessage(`Staff account created for ${user.email} (synced to cloud)`);
   };
 
-  const handleToggleUser = (userId: string) => {
+  const handleToggleUser = async (userId: string) => {
     const updated = adminUsers.map((u) => (u.id === userId ? { ...u, active: !u.active } : u));
     setAdminUsers(updated);
-    saveStoredAdminUsers(updated);
+    await saveStoredAdminUsers(updated);
   };
 
   return (
@@ -490,24 +345,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   Edit every text section across the website. Any changes published here update the live site immediately.
                 </p>
               </div>
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  className="py-2.5 px-6 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-[#8A5A1E]/20 shrink-0"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Save Locally</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handlePublishRemote}
-                  className="py-2.5 px-5 rounded-xl border border-[#C4AC76]/20 bg-[#1D1B17] text-[#C4AC76] text-sm transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Publish Remotely / Export</span>
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="py-2.5 px-6 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-[#8A5A1E]/20 shrink-0"
+              >
+                <Save className="w-4 h-4" />
+                <span>Publish All Changes</span>
+              </button>
             </div>
 
             {/* SECTION 1: HERO */}
@@ -1608,28 +1452,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     ← Back to Newsletter List
                   </button>
 
-                  <div className="flex items-center gap-3">
-                    {editingIssue.pdfUrl && (
-                      <a
-                        href={editingIssue.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="py-2 px-4 rounded-xl bg-[#1D1B17] hover:bg-[#8A5A1E]/20 border border-[#C4AC76]/30 text-[#C4AC76] font-medium text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Preview Attached PDF</span>
-                      </a>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={handleSaveNewsletter}
-                      className="py-2 px-5 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-md shadow-[#8A5A1E]/20"
-                    >
-                      <Save className="w-3.5 h-3.5" />
-                      <span>Save Newsletter</span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveNewsletter}
+                    className="py-2 px-5 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Save Newsletter</span>
+                  </button>
                 </div>
 
                 <div className="p-6 rounded-2xl bg-[#131210] border border-[#C4AC76]/20 space-y-4">
@@ -1664,6 +1494,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Intro Paragraph</label>
+                    <textarea
+                      rows={4}
+                      value={editingIssue.introParagraphs?.[0] || ''}
+                      onChange={(e) => setEditingIssue({ ...editingIssue, introParagraphs: [e.target.value] })}
+                      className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
+                    />
+                  </div>
 
                   {/* Newsletter PDF Edition Upload & Attachment */}
                   <div className="p-5 rounded-2xl bg-[#181613] border border-[#C4AC76]/30 space-y-4">
@@ -1724,12 +1563,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleHardDeletePdf(editingIssue.id)}
-                            className="px-3 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-xs text-red-300 hover:text-red-100 flex items-center gap-1.5 transition-colors cursor-pointer"
-                            title="Execute permanent hard deletion of this PDF file from storage"
+                            onClick={handleRemovePdf}
+                            className="px-3 py-1.5 rounded-lg bg-red-950/30 hover:bg-red-900/40 border border-red-500/30 text-xs text-red-300 flex items-center gap-1.5 transition-colors cursor-pointer"
                           >
-                            <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                            <span>Hard Delete PDF</span>
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Remove</span>
                           </button>
                         </div>
                       </div>
@@ -1753,11 +1591,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         }`}
                       >
                         {isUploadingPdf ? (
-                          <div className="flex flex-col items-center justify-center py-4 space-y-2">
-                            <Loader2 className="w-8 h-8 text-[#C4AC76] animate-spin" />
-                            <span className="text-xs font-mono text-[#C4AC76] font-medium">
-                              Uploading newsletter PDF...
-                            </span>
+                          <div className="flex flex-col items-center justify-center py-2">
+                            <Loader2 className="w-7 h-7 text-[#C4AC76] animate-spin mb-2" />
+                            <span className="text-xs font-mono text-[#C4AC76]">Processing PDF upload...</span>
                           </div>
                         ) : (
                           <>
@@ -1765,10 +1601,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <FileUp className="w-6 h-6" />
                             </div>
                             <div className="text-sm font-medium text-[#ECE6D6]">
-                              Upload Newsletter PDF
+                              Click to browse or drag and drop newsletter PDF here
                             </div>
                             <div className="text-xs text-[#8E8E8E] mt-1">
-                              Drop your newsletter PDF here or click to browse. Readers will be able to read and download the PDF edition directly on the page.
+                              Supports standard PDF files up to 50MB
                             </div>
                           </>
                         )}
@@ -1786,43 +1622,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
 
                     {/* External PDF URL input */}
-                    
+                    <div className="pt-1">
+                      <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">
+                        Or enter hosted PDF URL (IPFS, CDN, S3, or Google Drive)
+                      </label>
+                      <input
+                        id="newsletter-pdf-url-input"
+                        type="url"
+                        value={editingIssue.pdfUrl || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditingIssue({
+                            ...editingIssue,
+                            pdfUrl: val,
+                            pdfFileName: val ? val.split('/').pop()?.split('?')[0] || 'newsletter.pdf' : undefined,
+                            pdfFileSize: val ? 'External PDF' : undefined,
+                          });
+                        }}
+                        placeholder="https://example.com/newsletter-01.pdf"
+                        className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-xs text-[#ECE6D6] font-mono placeholder-[#6B6252] focus:outline-none focus:border-[#C4AC76]"
+                      />
+                    </div>
                   </div>
 
-                
+                  {editingIssue.summaryTable && (
+                    <div className="pt-3 border-t border-[#C4AC76]/10 space-y-3">
+                      <span className="text-xs font-mono uppercase text-[#C4AC76] block">Summary Table</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">How</label>
+                          <input
+                            type="text"
+                            value={editingIssue.summaryTable.how || ''}
+                            onChange={(e) => setEditingIssue({
+                              ...editingIssue,
+                              summaryTable: { ...editingIssue.summaryTable, how: e.target.value }
+                            })}
+                            className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">Why</label>
+                          <input
+                            type="text"
+                            value={editingIssue.summaryTable.why || ''}
+                            onChange={(e) => setEditingIssue({
+                              ...editingIssue,
+                              summaryTable: { ...editingIssue.summaryTable, why: e.target.value }
+                            })}
+                            className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-serif text-[#ECE6D6]">Newsletter Manager</h2>
-                    <p className="text-xs text-[#8E8E8E] mt-1">Upload PDF dispatches or edit website editions.</p>
+                    <p className="text-xs text-[#8E8E8E] mt-1">Upload and edit newsletter issues.</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => pdfImportInputRef.current?.click()}
-                      className="py-2.5 px-5 rounded-xl bg-[#1D1B17] hover:bg-[#8A5A1E]/20 border border-[#C4AC76]/40 text-[#C4AC76] font-semibold text-sm flex items-center gap-2 cursor-pointer transition-all shadow-xs"
-                    >
-                      <FileUp className="w-4 h-4 text-[#C4AC76]" />
-                      <span>Upload Newsletter PDF</span>
-                    </button>
-                    <button
-                      onClick={handleStartNewNewsletter}
-                      className="py-2.5 px-6 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-[#8A5A1E]/20"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>New Newsletter</span>
-                    </button>
-                    <input
-                      ref={pdfImportInputRef}
-                      type="file"
-                      accept="application/pdf,.pdf"
-                      className="hidden"
-                      onChange={handleImportPdfDirect}
-                    />
-                  </div>
+                  <button
+                    onClick={handleStartNewNewsletter}
+                    className="py-2.5 px-6 rounded-xl bg-[#8A5A1E] hover:bg-[#B27B36] text-[#131210] font-semibold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-[#8A5A1E]/20"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>New Newsletter</span>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
@@ -1858,21 +1727,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <Edit3 className="w-3.5 h-3.5" />
                           <span>Edit</span>
                         </button>
-                        {issue.pdfUrl && (
-                          <button
-                            onClick={() => handleHardDeletePdf(issue.id)}
-                            className="px-2.5 py-1.5 rounded-lg bg-red-950/30 hover:bg-red-900/50 border border-red-500/30 text-xs text-red-400 hover:text-red-200 cursor-pointer flex items-center gap-1"
-                            title="Permanently hard-delete attached PDF from storage"
-                          >
-                            <FileX className="w-3.5 h-3.5" />
-                            <span className="hidden lg:inline text-[11px]">Delete PDF</span>
-                          </button>
-                        )}
-                        {(currentUser.role === 'superadmin' || currentUser.role === 'owner' || currentUser.role === 'editor') && (
+                        {(currentUser.role === 'superadmin' || currentUser.role === 'owner') && (
                           <button
                             onClick={() => handleDeleteNewsletter(issue.id)}
-                            className="px-2.5 py-1.5 rounded-lg bg-[#1D1B17] hover:bg-red-950/50 border border-[#C4AC76]/20 hover:border-red-500/40 text-xs text-[#8E8E8E] hover:text-red-400 cursor-pointer"
-                            title="Permanently hard-delete newsletter & attached PDF"
+                            className="px-2.5 py-1.5 rounded-lg bg-[#1D1B17] hover:bg-red-950/40 border border-[#C4AC76]/20 text-xs text-[#8E8E8E] hover:text-red-400 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
