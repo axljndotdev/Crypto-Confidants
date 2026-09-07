@@ -16,8 +16,8 @@ export const Hero: React.FC<HeroProps> = ({ onOpenPricing, onReadNewsletter, con
   const subparagraph = content?.subparagraph || "Crypto Confidants helps people around the world understand what's actually available in the crypto space — self-custody, cold storage, and true financial portability — and gives you a confidential space to think clearly through your own situation before you decide anything.";
   const primaryCta = content?.primaryCta || 'Start a conversation';
   const secondaryCta = content?.secondaryCta || 'Read Newsletter';
-  const pillar1 = content?.pillar1 || 'Access';
-  const pillar2 = content?.pillar2 || 'Flexibility';
+  const pillar1 = content?.pillar1 || 'Flexibility';
+  const pillar2 = content?.pillar2 || 'Access';
   const pillar3 = content?.pillar3 || 'Sovereignty';
 
   return (
