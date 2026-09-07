@@ -9,13 +9,16 @@ import { HowWeCommunicateSection } from './components/HowWeCommunicateSection';
 import { StartHereSection } from './components/StartHereSection';
 import { PricingPage } from './components/PricingPage';
 import { NewslettersPage } from './components/NewslettersPage';
+import { TermsAndConditionsPage } from './components/TermsAndConditionsPage';
 import { ConsultationModal } from './components/ConsultationModal';
 import { Footer } from './components/Footer';
 import { AdminLoginPage } from './components/admin/AdminLoginPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { getActiveSession, setActiveSession, getStoredSiteContent, initGlobalFirestoreSync } from './lib/contentStore';
 
-function getInitialPage(): 'home' | 'pricing' | 'newsletters' | 'admin' | 'admin-login' {
+type AppRoute = 'home' | 'pricing' | 'newsletters' | 'terms' | 'admin' | 'admin-login';
+
+function getInitialPage(): AppRoute {
   if (typeof window === 'undefined') return 'home';
   const path = window.location.pathname.toLowerCase();
   const hash = window.location.hash.toLowerCase();
@@ -25,6 +28,15 @@ function getInitialPage(): 'home' | 'pricing' | 'newsletters' | 'admin' | 'admin
   if (isAdmin) {
     const session = getActiveSession();
     return session ? 'admin' : 'admin-login';
+  }
+  if (path.includes('terms') || hash.includes('terms') || search.includes('terms') || path.includes('privacy') || hash.includes('privacy')) {
+    return 'terms';
+  }
+  if (path.includes('pricing') || hash.includes('pricing') || search.includes('pricing')) {
+    return 'pricing';
+  }
+  if (path.includes('newsletter') || hash.includes('newsletter') || search.includes('newsletter')) {
+    return 'newsletters';
   }
   return 'home';
 }
@@ -37,7 +49,7 @@ export default function App() {
   const [prefilledConsultationTopic, setPrefilledConsultationTopic] = useState('');
   const [auditScore, setAuditScore] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState('hero');
-  const [currentPage, setCurrentPage] = useState<'home' | 'pricing' | 'newsletters' | 'admin' | 'admin-login'>(getInitialPage);
+  const [currentPage, setCurrentPage] = useState<AppRoute>(getInitialPage);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -79,7 +91,25 @@ export default function App() {
           setCurrentUser(null);
           setCurrentPage('admin-login');
         }
+        return;
       }
+
+      if (path.includes('terms') || hash.includes('terms') || search.includes('terms') || path.includes('privacy') || hash.includes('privacy')) {
+        setCurrentPage('terms');
+        return;
+      }
+
+      if (path.includes('pricing') || hash.includes('pricing') || search.includes('pricing')) {
+        setCurrentPage('pricing');
+        return;
+      }
+
+      if (path.includes('newsletter') || hash.includes('newsletter') || search.includes('newsletter')) {
+        setCurrentPage('newsletters');
+        return;
+      }
+
+      setCurrentPage('home');
     };
 
     syncRoute();
@@ -128,12 +158,32 @@ export default function App() {
   };
 
   const handleOpenPricing = () => {
+    try {
+      window.history.pushState({}, '', '/pricing');
+    } catch {
+      // Fallback
+    }
     setCurrentPage('pricing');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenNewsletters = () => {
+    try {
+      window.history.pushState({}, '', '/newsletters');
+    } catch {
+      // Fallback
+    }
     setCurrentPage('newsletters');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenTerms = () => {
+    try {
+      window.history.pushState({}, '', '/terms-and-conditions');
+    } catch {
+      // Fallback
+    }
+    setCurrentPage('terms');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -217,12 +267,19 @@ export default function App() {
         {currentPage === 'pricing' ? (
           <PricingPage
             onBackHome={handleBackHome}
+            onOpenTerms={handleOpenTerms}
             content={siteContent.pricing}
           />
         ) : currentPage === 'newsletters' ? (
           <NewslettersPage
             onBackHome={handleBackHome}
             onOpenPricing={handleOpenPricing}
+          />
+        ) : currentPage === 'terms' ? (
+          <TermsAndConditionsPage
+            onBackHome={handleBackHome}
+            onOpenPricing={handleOpenPricing}
+            onOpenConsultation={() => handleOpenConsultation()}
           />
         ) : (
           <>
@@ -258,6 +315,7 @@ export default function App() {
             <StartHereSection
               onOpenConsultation={() => handleOpenConsultation()}
               onOpenPricing={handleOpenPricing}
+              onOpenTerms={handleOpenTerms}
               onBackToTop={handleBackToTop}
               content={siteContent.startHere}
             />
@@ -272,6 +330,8 @@ export default function App() {
         onOpenConsultation={() => handleOpenConsultation()}
         onOpenPricing={handleOpenPricing}
         onOpenNewsletters={handleOpenNewsletters}
+        onOpenTerms={handleOpenTerms}
+        onBackHome={currentPage !== 'home' ? handleBackHome : undefined}
       />
 
       {/* Consultation Intake Modal */}

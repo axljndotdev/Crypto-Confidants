@@ -9,11 +9,13 @@ interface FooterProps {
   onOpenConsultation?: () => void;
   onOpenPricing?: () => void;
   onOpenNewsletters?: () => void;
+  onOpenTerms?: () => void;
   onBackHome?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onOpenPricing,
+  onOpenTerms,
   onBackHome
 }) => {
   const scrollToSection = (id: string) => {
@@ -88,6 +90,16 @@ export const Footer: React.FC<FooterProps> = ({
                   </button>
                 </li>
               )}
+              {onOpenTerms && (
+                <li>
+                  <button
+                    onClick={onOpenTerms}
+                    className="hover:text-theme-brass transition-colors text-left cursor-pointer"
+                  >
+                    Terms & Privacy Policy
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -111,9 +123,19 @@ export const Footer: React.FC<FooterProps> = ({
           <p>
             © 2026 Crypto Confidant. Educational content and confidential conversations only — not legal, tax, or financial advice.
           </p>
-          <p className="shrink-0">
-            Built by people who've been through it.
-          </p>
+          <div className="flex flex-wrap items-center gap-4 shrink-0">
+            {onOpenTerms && (
+              <button
+                onClick={onOpenTerms}
+                className="hover:text-theme-brass underline decoration-theme-brass/40 underline-offset-4 transition-colors cursor-pointer text-theme-muted"
+              >
+                Terms & Privacy Policy
+              </button>
+            )}
+            <p className="shrink-0">
+              Built by people who've been through it.
+            </p>
+          </div>
         </div>
 
       </div>

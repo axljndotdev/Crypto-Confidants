@@ -10,6 +10,7 @@ import { SiteContent } from '../types';
 
 interface PricingPageProps {
   onOpenConsultation?: () => void;
+  onOpenTerms?: () => void;
   onBackHome: () => void;
   content?: SiteContent['pricing'];
 }
@@ -29,6 +30,7 @@ interface Tier {
 
 export const PricingPage: React.FC<PricingPageProps> = ({
   onBackHome,
+  onOpenTerms,
   content,
 }) => {
   const [selectedTier, setSelectedTier] =
@@ -292,6 +294,16 @@ If you are ready to get started, choose the introductory session below.`;
               Our conversations are educational and confidential. They do not
               constitute legal, tax, investment, or financial advice.
             </p>
+            {onOpenTerms && (
+              <div className="mt-3">
+                <button
+                  onClick={onOpenTerms}
+                  className="text-xs font-mono text-theme-brass hover:underline underline-offset-4 cursor-pointer transition-colors"
+                >
+                  View Terms & Conditions and 180-Day Session Expiration Policy →
+                </button>
+              </div>
+            )}
 
           </div>
 

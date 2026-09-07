@@ -4,12 +4,14 @@ import { SiteContent } from '../types';
 interface StartHereSectionProps {
   onOpenConsultation?: () => void;
   onOpenPricing?: () => void;
+  onOpenTerms?: () => void;
   onBackToTop: () => void;
   content?: SiteContent['startHere'];
 }
 
 export const StartHereSection: React.FC<StartHereSectionProps> = ({
   onOpenPricing,
+  onOpenTerms,
   onBackToTop,
   content,
 }) => {
@@ -59,9 +61,21 @@ export const StartHereSection: React.FC<StartHereSectionProps> = ({
         </div>
 
         {/* Disclaimer Text */}
-        <p className="text-xs sm:text-sm text-theme-muted/80 max-w-2xl mx-auto leading-relaxed font-normal pt-6">
-          {disclaimerText}
-        </p>
+        <div className="pt-6 space-y-2">
+          <p className="text-xs sm:text-sm text-theme-muted/80 max-w-2xl mx-auto leading-relaxed font-normal">
+            {disclaimerText}
+          </p>
+          {onOpenTerms && (
+            <div>
+              <button
+                onClick={onOpenTerms}
+                className="text-xs font-mono text-theme-brass hover:underline underline-offset-4 cursor-pointer transition-colors"
+              >
+                Read Terms & Conditions and Privacy Policy →
+              </button>
+            </div>
+          )}
+        </div>
 
       </div>
     </section>
