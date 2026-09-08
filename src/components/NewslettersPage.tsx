@@ -471,22 +471,8 @@ export const NewslettersPage: React.FC<
     setPdfLoadError(true);
     setPdfViewerFallback(false);
     setPdfErrorMessage(
-      error?.message ||
-        'Preview is currently unavailable for this newsletter. Please click Open to view the official PDF in a new tab.'
+      'Preview is not available at the moment. Please click Open to view the official PDF.'
     );
-
-    if (activePdfUrl) {
-      window.setTimeout(() => {
-        try {
-          const opened = window.open(activePdfUrl, '_blank', 'noopener,noreferrer');
-          if (!opened) {
-            console.warn('Popup blocked while opening newsletter PDF.');
-          }
-        } catch (openErr) {
-          console.warn('Failed to auto-open newsletter PDF:', openErr);
-        }
-      }, 250);
-    }
   };
 
   /*
@@ -1969,7 +1955,7 @@ export const NewslettersPage: React.FC<
                     }}
                   >
 
-                    {/* LOADING */}
+                    {/* PREVIEW UNAVAILABLE */}
 
                     {pdfLoading && (
 
@@ -1981,31 +1967,51 @@ export const NewslettersPage: React.FC<
                         items-center
                         justify-center
                         bg-[#24211C]
+                        p-6
+                        text-center
                       ">
 
-                        <div className="
-                          flex
-                          flex-col
-                          items-center
-                          gap-3
-                          text-center
-                          px-6
-                        ">
+                        <div className="max-w-sm">
 
-                          <Loader2 className="
-                            w-7
-                            h-7
-                            text-theme-brass
-                            animate-spin
-                          " />
-
-                          <span className="
-                            text-sm
-                            text-[#D4CFC5]
+                          <div className="
+                            mx-auto
+                            w-12
+                            h-12
+                            rounded-full
+                            bg-theme-brass/10
+                            border
+                            border-theme-brass/25
+                            flex
+                            items-center
+                            justify-center
                           ">
-                            Loading official
-                            edition…
-                          </span>
+
+                            <FileText className="
+                              w-6
+                              h-6
+                              text-theme-brass
+                            " />
+
+                          </div>
+
+                          <h3 className="
+                            mt-4
+                            text-base
+                            sm:text-lg
+                            font-semibold
+                            text-[#F4F0E8]
+                          ">
+                            Preview is not available at the moment
+                          </h3>
+
+                          <p className="
+                            mt-2
+                            text-sm
+                            leading-relaxed
+                            text-[#B7B1A7]
+                          ">
+                            Please click Open to view the official PDF.
+                          </p>
 
                         </div>
 
@@ -2061,7 +2067,7 @@ export const NewslettersPage: React.FC<
                             font-semibold
                             text-[#F4F0E8]
                           ">
-                            Preview is currently unavailable
+                            Preview is not available at the moment
                           </h3>
 
 
@@ -2071,7 +2077,7 @@ export const NewslettersPage: React.FC<
                             leading-relaxed
                             text-[#B7B1A7]
                           ">
-                            Please click Open to view the official PDF in a new tab.
+                            Please click Open to view the official PDF.
                           </p>
 
 
@@ -2170,55 +2176,7 @@ export const NewslettersPage: React.FC<
                         PDF.JS
                     ================================================= */}
 
-                    {!pdfLoadError &&
-                      activePdfUrl &&
-                      !pdfViewerFallback && (
-
-                        <Document
-                          key={`${activeNewsletter.id}:${activePdfUrl}`}
-                          file={memoizedPdfFile}
-                          onLoadSuccess={
-                            handlePdfLoadSuccess
-                          }
-                          onLoadError={
-                            handlePdfLoadError
-                          }
-                          loading={null}
-                          error={null}
-                          className="
-                            flex
-                            justify-center
-                            items-start
-                          "
-                          options={PDF_DOCUMENT_OPTIONS}
-                        >
-
-                          {viewerWidth > 0 && (
-                            <div>
-                              <Page
-                                pageNumber={
-                                  pdfPage
-                                }
-                                width={
-                                  pdfPageWidth
-                                }
-                                renderTextLayer={
-                                  true
-                                }
-                                renderAnnotationLayer={
-                                  true
-                                }
-                                className="
-                                  shadow-2xl
-                                  bg-white
-                                "
-                              />
-                            </div>
-                          )}
-
-                        </Document>
-
-                      )}
+                    
 
                     {activePdfUrl &&
                       pdfViewerFallback && (
