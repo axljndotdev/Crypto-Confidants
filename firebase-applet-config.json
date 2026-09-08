@@ -3,7 +3,7 @@
   "appId": "1:306019562018:web:4015bb973d5410c1de107b",
   "apiKey": "AIzaSyAiN0MwSI5dqqBE4RduQ_BzINRJ8vsJRIQ",
   "authDomain": "crypto-confidant-2026.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-remixcryptoconfi-6d3186fa-a1e4-4aad-b3ab-d79e018d0795",
+  "firestoreDatabaseId": "(default)",
   "storageBucket": "crypto-confidant-2026.firebasestorage.app",
   "messagingSenderId": "306019562018",
   "measurementId": "",
