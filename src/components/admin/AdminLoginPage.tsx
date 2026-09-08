@@ -59,7 +59,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess, 
         className="mb-8 inline-flex items-center gap-2 text-xs font-mono text-[#8E8E8E] hover:text-[#C4AC76] transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Return to CryptoConfidants.com</span>
+        <span>Return to CryptoConfidant.com</span>
       </button>
 
       <div className="w-full max-w-md bg-[#131210] border border-[#C4AC76]/30 rounded-2xl shadow-2xl overflow-hidden">
