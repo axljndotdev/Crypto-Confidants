@@ -20,6 +20,7 @@ import {
   downloadNewsletterPdfFile,
   savePdfToIndexedDb,
   formatFileSize,
+  generateNewsletterPdf,
 } from '../lib/pdfStorage';
 
 import { uploadPdfToFirebaseStorage } from '../lib/firebase';
@@ -255,6 +256,10 @@ export const NewslettersPage: React.FC<
   const [pdfScale, setPdfScale] =
     useState(1);
 
+  const memoizedPdfFile = useMemo(() => {
+    return activePdfUrl ? { url: activePdfUrl } : null;
+  }, [activePdfUrl]);
+
   useEffect(() => {
     return () => {
       if (localPdfUrlRef.current) {
@@ -456,16 +461,35 @@ export const NewslettersPage: React.FC<
    * ==========================================================
    */
 
-  const handlePdfLoadError = (error: Error) => {
+  const handlePdfLoadError = async (error: Error) => {
     console.warn(
       'PDF.js render error:',
       error?.message || error
     );
 
-    // Do not generate or synthesize a replacement PDF here. The page should
-    // render the actual edition retrieved from Firebase Storage (or a PDF
-    // explicitly selected by the user). If PDF.js cannot render it, fall back
-    // to the browser's native PDF viewer instead of creating another document.
+    // If PDF.js failed to render (e.g. network/fetch error on an external file),
+    // automatically attempt the high-fidelity dynamic fallback PDF so the reader is uninterrupted.
+    if (activeNewsletter && pdfSourceKind !== 'local') {
+      try {
+        console.info('Attempting dynamic PDF generation fallback for rendering...');
+        const fallbackBlob = await generateNewsletterPdf(activeNewsletter);
+        const fallbackBlobUrl = URL.createObjectURL(fallbackBlob);
+        if (localPdfUrlRef.current) {
+          URL.revokeObjectURL(localPdfUrlRef.current);
+        }
+        localPdfUrlRef.current = fallbackBlobUrl;
+        setActivePdfUrl(fallbackBlobUrl);
+        setPdfSourceKind('local');
+        setPdfLoading(true);
+        setPdfLoadError(false);
+        setPdfViewerFallback(false);
+        setPdfErrorMessage(null);
+        return;
+      } catch (genErr) {
+        console.warn('Dynamic fallback generation error:', genErr);
+      }
+    }
+
     setPdfLoading(false);
     setPdfLoadError(true);
     setPdfViewerFallback(true);
@@ -1059,25 +1083,24 @@ export const NewslettersPage: React.FC<
 
             <div className="min-w-0">
 
-              <div className="
-                font-serif
-                text-base
-                sm:text-lg
-                text-theme-main
-                font-medium
-              ">
-                Browse newsletters
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-semibold text-theme-brass tracking-wider">
+                  {formatNewsletterDate(activeNewsletter.date)}
+                </span>
+                <span className="text-xs text-theme-muted">
+                  · {activeNewsletter.issueNumber}
+                </span>
               </div>
 
               <div className="
-                text-xs
-                sm:text-sm
-                text-theme-muted
+                font-sans
+                text-sm
+                sm:text-base
+                text-theme-main
+                font-bold
                 mt-0.5
                 truncate
               ">
-                {activeNewsletter.issueNumber}
-                {' · '}
                 {activeNewsletter.title}
               </div>
 
@@ -1248,68 +1271,17 @@ export const NewslettersPage: React.FC<
             </div>
 
 
-            {/* CATEGORIES */}
-
-            <div className="
-              flex
-              gap-2
-              pt-0.5
-              overflow-x-auto
-              pb-1
-              scrollbar-none
-              touch-pan-x
-            ">
-
-              {categories.map(
-                (category) => (
-
-                  <button
-                    key={category}
-                    onClick={() =>
-                      setSelectedCategory(
-                        category
-                      )
-                    }
-                    className={`
-                      min-h-[42px]
-                      shrink-0
-                      whitespace-nowrap
-                      text-xs
-                      sm:text-sm
-                      font-medium
-                      px-3.5
-                      rounded-lg
-                      transition-all
-                      cursor-pointer
-                      touch-manipulation
-                      ${
-                        selectedCategory ===
-                        category
-                          ? 'bg-theme-brass/20 text-theme-brass border border-theme-brass/40 font-semibold'
-                          : 'bg-theme-surface-hover text-theme-muted hover:text-theme-main border border-theme'
-                      }
-                    `}
-                  >
-                    {category}
-                  </button>
-
-                )
-              )}
-
-            </div>
-
-
             {/* LIST */}
 
             <div className="
-              space-y-2.5
-              pt-1
-              max-h-[420px]
-              sm:max-h-[500px]
-              lg:max-h-[calc(100vh-320px)]
+              divide-y
+              divide-theme-subtle
+              max-h-[500px]
+              sm:max-h-[600px]
+              lg:max-h-[calc(100vh-280px)]
               overflow-y-auto
               overscroll-contain
-              pr-0.5
+              pr-1
               scrollbar-thin
             ">
 
@@ -1331,153 +1303,113 @@ export const NewslettersPage: React.FC<
               ) : (
 
                 filteredNewsletters.map(
-                  (newsletter) => {
+                  (newsletter, index) => {
 
                     const isSelected =
                       newsletter.id ===
                       activeNewsletter.id;
 
+                    const numMatch = newsletter.issueNumber.match(/\d+/);
+                    const numStr = numMatch
+                      ? numMatch[0].padStart(2, '0')
+                      : String(index + 1).padStart(2, '0');
+
+                    const description =
+                      newsletter.introParagraphs?.[0] ||
+                      'Official published edition with security analysis and protection protocols.';
+
                     return (
 
                       <button
                         key={newsletter.id}
-                        onClick={() =>
+                        type="button"
+                        onClick={() => {
                           handleSelectNewsletter(
                             newsletter.id
-                          )
-                        }
+                          );
+                          setMobileArchiveOpen(false);
+                        }}
                         className={`
                           w-full
-                          min-h-[120px]
                           text-left
-                          p-3.5
-                          sm:p-4
-                          rounded-xl
-                          border
+                          py-5
+                          sm:py-6
+                          first:pt-2
+                          last:pb-2
+                          flex
+                          items-start
+                          gap-4
+                          sm:gap-5
                           transition-all
                           cursor-pointer
                           touch-manipulation
-                          flex
-                          flex-col
-                          gap-2
+                          group
+                          -mx-2.5
+                          px-2.5
+                          rounded-xl
                           ${
                             isSelected
-                              ? 'bg-theme-brass/10 border-theme-brass/50 text-theme-main shadow-xs'
-                              : 'bg-theme-main/50 border-theme hover:border-theme-brass/30 text-theme-muted hover:text-theme-main'
+                              ? 'bg-theme-brass/[0.06]'
+                              : 'hover:bg-theme-surface-hover/50'
                           }
                         `}
                       >
 
-                        <div className="
-                          flex
-                          items-center
-                          justify-between
-                          gap-3
-                          text-xs
-                          sm:text-sm
+                        <span className="
+                          font-serif
+                          text-2xl
+                          sm:text-3xl
+                          text-theme-brass
+                          font-normal
+                          shrink-0
+                          mt-0.5
+                          w-7
+                          sm:w-8
+                          select-none
                         ">
+                          {numStr}
+                        </span>
 
-                          <span className="
-                            text-theme-brass
+                        <div className="space-y-1.5 flex-1 min-w-0">
+
+                          <div className="
+                            text-xs
+                            sm:text-sm
                             font-semibold
-                            whitespace-nowrap
+                            text-theme-brass
+                            tracking-wider
                           ">
                             {formatNewsletterDate(
                               newsletter.date
                             )}
-                          </span>
-
-                          <div className="
-                            flex
-                            items-center
-                            gap-1.5
-                            whitespace-nowrap
-                          ">
-
-                            {newsletter.pdfUrl && (
-
-                              <span className="
-                                text-[10px]
-                                font-mono
-                                text-theme-brass
-                                bg-theme-brass/10
-                                border
-                                border-theme-brass/30
-                                px-1.5
-                                py-0.5
-                                rounded
-                                font-semibold
-                              ">
-                                PDF
-                              </span>
-
-                            )}
-
-                            <span className="text-theme-muted">
-                              {newsletter.issueNumber}
-                            </span>
-
                           </div>
 
-                        </div>
+                          <h3 className={`
+                            font-sans
+                            text-base
+                            sm:text-lg
+                            font-bold
+                            leading-snug
+                            transition-colors
+                            ${
+                              isSelected
+                                ? 'text-theme-main'
+                                : 'text-theme-main group-hover:text-theme-brass'
+                            }
+                          `}>
+                            {newsletter.title}
+                          </h3>
 
-                        <h3 className={`
-                          text-sm
-                          sm:text-base
-                          font-serif
-                          leading-snug
-                          line-clamp-2
-                          ${
-                            isSelected
-                              ? 'font-semibold text-theme-main'
-                              : 'font-normal'
-                          }
-                        `}>
-                          {newsletter.title}
-                        </h3>
-
-                        <div className="
-                          flex
-                          items-center
-                          justify-between
-                          gap-2
-                          pt-1
-                          mt-auto
-                        ">
-
-                          <span className="
-                            max-w-[65%]
-                            truncate
+                          <p className="
                             text-xs
-                            px-2.5
-                            py-1.5
-                            rounded
-                            bg-theme-surface
-                            border
-                            border-theme
+                            sm:text-sm
                             text-theme-muted
+                            leading-relaxed
+                            font-normal
+                            line-clamp-3
                           ">
-                            {newsletter.category}
-                          </span>
-
-                          <span className="
-                            shrink-0
-                            text-xs
-                            text-theme-muted
-                            flex
-                            items-center
-                            gap-1.5
-                          ">
-
-                            <Clock className="
-                              w-3.5
-                              h-3.5
-                              shrink-0
-                            " />
-
-                            {newsletter.readTime}
-
-                          </span>
+                            {description}
+                          </p>
 
                         </div>
 
@@ -1547,7 +1479,7 @@ export const NewslettersPage: React.FC<
                   items-center
                   gap-2
                   px-3.5
-                  py-2
+                  py-1.5
                   rounded-full
                   bg-theme-brass/10
                   border
@@ -1555,19 +1487,20 @@ export const NewslettersPage: React.FC<
                   text-theme-brass
                   text-xs
                   sm:text-sm
-                  font-medium
+                  font-semibold
+                  tracking-wide
                 ">
 
-                  <span className="truncate">
-                    {activeNewsletter.category}
+                  <span>
+                    {formatNewsletterDate(activeNewsletter.date)}
                   </span>
 
                   <span className="shrink-0">
                     •
                   </span>
 
-                  <span className="shrink-0">
-                    {activeNewsletter.readTime}
+                  <span>
+                    {activeNewsletter.issueNumber}
                   </span>
 
                 </div>
@@ -2236,7 +2169,7 @@ export const NewslettersPage: React.FC<
 
                         <Document
                           key={`${activeNewsletter.id}:${activePdfUrl}`}
-                          file={{ url: activePdfUrl }}
+                          file={memoizedPdfFile}
                           onLoadSuccess={
                             handlePdfLoadSuccess
                           }

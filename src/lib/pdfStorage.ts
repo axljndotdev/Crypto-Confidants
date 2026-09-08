@@ -410,8 +410,50 @@ export async function getNewsletterPdf(
 ): Promise<{ url: string; fileName: string; fileSize: string; isGenerated?: boolean }> {
   const defaultFileName = `${newsletter.issueNumber.replace(/\s+/g, '_')}_Official_Edition.pdf`;
 
-  // 1. Direct or Firebase Storage URL configured on newsletter
+  // 1. If configured with an already-resolved local blob or data URL, return immediately
   if (newsletter.pdfUrl) {
+    if (newsletter.pdfUrl.startsWith('blob:') || newsletter.pdfUrl.startsWith('data:')) {
+      return {
+        url: newsletter.pdfUrl,
+        fileName: newsletter.pdfFileName || defaultFileName,
+        fileSize: newsletter.pdfFileSize || 'PDF Document',
+      };
+    }
+  }
+
+  // 2. Check local bundled files in public directory (fastest, 100% CORS-safe)
+  const localCandidates = [
+    newsletter.pdfUrl?.startsWith('/') ? newsletter.pdfUrl : null,
+    newsletter.pdfFileName ? `/newsletters/${newsletter.pdfFileName}` : null,
+    newsletter.pdfFileName ? `/${newsletter.pdfFileName}` : null,
+    `/newsletters/${newsletter.id}.pdf`,
+    `/${newsletter.id}.pdf`,
+  ].filter((p): p is string => Boolean(p));
+
+  for (const candidate of localCandidates) {
+    try {
+      const res = await fetch(candidate);
+      if (res.ok) {
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('pdf') || ct.includes('octet-stream')) {
+          const blob = await res.blob();
+          if (blob.size > 100) {
+            const blobUrl = URL.createObjectURL(blob);
+            return {
+              url: blobUrl,
+              fileName: newsletter.pdfFileName || defaultFileName,
+              fileSize: formatFileSize(blob.size),
+            };
+          }
+        }
+      }
+    } catch {
+      // Continue to next candidate
+    }
+  }
+
+  // 3. If explicit remote or Firebase Storage URL is provided, try to fetch into a clean local Blob
+  if (newsletter.pdfUrl && !newsletter.pdfUrl.startsWith('/')) {
     try {
       const resolved = await resolveFirebaseStorageUrl(newsletter.pdfUrl);
       if (resolved) {
@@ -423,7 +465,6 @@ export async function getNewsletterPdf(
           };
         }
 
-        // Fetch remote URL to create a clean local Blob URL (eliminates CORS / worker fetch failures in PDF.js)
         try {
           const response = await fetch(resolved);
           if (response.ok) {
@@ -436,7 +477,7 @@ export async function getNewsletterPdf(
             };
           }
         } catch (fetchErr) {
-          console.warn('Could not fetch remote PDF URL, attempting local fallback:', fetchErr);
+          console.warn('Could not fetch remote PDF URL directly (CORS/network), trying local/fallback options:', fetchErr);
         }
       }
     } catch (resolveErr) {
@@ -444,7 +485,7 @@ export async function getNewsletterPdf(
     }
   }
 
-  // 2. Direct lookup in Firebase Storage bucket under gs://crypto-confidant-2026.firebasestorage.app/newsletters/
+  // 4. Direct lookup in Firebase Storage bucket under gs://crypto-confidant-2026.firebasestorage.app/newsletters/
   try {
     const storageRef = ref(storage, `newsletters/${newsletter.id}.pdf`);
     const downloadUrl = await getDownloadURL(storageRef);
@@ -460,23 +501,18 @@ export async function getNewsletterPdf(
             fileSize: formatFileSize(blob.size),
           };
         }
-      } catch {
-        return {
-          url: downloadUrl,
-          fileName: newsletter.pdfFileName || defaultFileName,
-          fileSize: 'Firebase Storage',
-        };
+      } catch (storageFetchErr) {
+        console.warn('Direct Firebase Storage fetch blocked by CORS, proceeding to cache/fallback:', storageFetchErr);
       }
     }
   } catch {
     // Not found in default exact bucket path, check dynamic list
   }
 
-  // 2b. Dynamic search across all files in Firebase Storage bucket
+  // 4b. Dynamic search across all files in Firebase Storage bucket
   try {
     const storageFiles = await listNewslettersFromFirebaseStorage();
     if (storageFiles && storageFiles.length > 0) {
-      // Look for specific matching file by ID or name, or use available file in bucket
       const matchingFile = storageFiles.find(
         (f) =>
           f.newsletterId === newsletter.id ||
@@ -497,12 +533,8 @@ export async function getNewsletterPdf(
               fileSize: matchingFile.size ? formatFileSize(matchingFile.size) : formatFileSize(blob.size),
             };
           }
-        } catch {
-          return {
-            url: matchingFile.downloadUrl,
-            fileName: matchingFile.originalName || matchingFile.name || newsletter.pdfFileName || defaultFileName,
-            fileSize: matchingFile.size ? formatFileSize(matchingFile.size) : 'Firebase Storage',
-          };
+        } catch (dynFetchErr) {
+          console.warn('Dynamic Firebase Storage fetch blocked by CORS, proceeding to cache/fallback:', dynFetchErr);
         }
       }
     }
@@ -510,7 +542,7 @@ export async function getNewsletterPdf(
     // Dynamic storage search fallback
   }
 
-  // 3. Local IndexedDB Cache (e.g. uploaded via /admin)
+  // 5. Local IndexedDB Cache (e.g. uploaded via /admin)
   const local = await getPdfBlobUrl(newsletter.id);
   if (local) {
     return {
@@ -520,7 +552,7 @@ export async function getNewsletterPdf(
     };
   }
 
-  // 4. Fallback: Dynamically generate official PDF edition on demand
+  // 6. Fallback: Dynamically generate official PDF edition on demand
   const cacheKey = `${newsletter.id}_${newsletter.date}_${newsletter.title}`;
   if (generatedPdfCache.has(cacheKey)) {
     return generatedPdfCache.get(cacheKey)!;

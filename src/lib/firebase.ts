@@ -54,8 +54,15 @@ export async function resolveFirebaseStorageUrl(urlOrPath: string): Promise<stri
   if (!urlOrPath) return null;
   const trimmed = urlOrPath.trim();
 
-  // If already a direct HTTP/HTTPS or local Blob URL, return directly
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('blob:')) {
+  // If already a direct HTTP/HTTPS, local Blob, data URL, or local asset path, return directly
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('/') ||
+    trimmed.startsWith('./')
+  ) {
     return trimmed;
   }
 

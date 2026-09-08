@@ -161,40 +161,62 @@ export const defaultAdminUsers: (AdminUser & { password?: string })[] = [
 
 export const MONTHS_SHORT = [
   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+  'JUL', 'AUG', 'SEPT', 'OCT', 'NOV', 'DEC'
 ] as const;
 
 export function formatNewsletterDate(dateStr: string): string {
   if (!dateStr || typeof dateStr !== 'string') return '';
   const trimmed = dateStr.trim();
 
-  // If already in YYYY-MMM-DD (e.g. 2026-SEP-04 or 2026-Sep-04)
-  const mmmMatch = trimmed.match(/^(\d{4})-([A-Za-z]{3})-(\d{1,2})$/);
-  if (mmmMatch) {
-    const year = mmmMatch[1];
-    const monUpper = mmmMatch[2].toUpperCase();
-    const day = mmmMatch[3].padStart(2, '0');
-    return `${year}-${monUpper}-${day}`;
+  // If already in DD-MMM-YYYY or DD-MMMM-YYYY (e.g. 07-SEPT-2026, 07-SEP-2026, 7-Sep-2026)
+  const dmyMatch = trimmed.match(/^(\d{1,2})[-/]([A-Za-z]{3,4})[-/](\d{4})$/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    let mon = dmyMatch[2].toUpperCase();
+    if (mon === 'SEP') mon = 'SEPT';
+    const year = dmyMatch[3];
+    return `${day}-${mon}-${year}`;
   }
 
-  // If in YYYY-MM-DD or YYYY/MM/DD (e.g. 2026-09-04 or 2026-9-4)
+  // If in YYYY-MMM-DD (e.g. 2026-SEP-07, 2026-SEPT-07, 2026-Sep-04)
+  const ymdMatch = trimmed.match(/^(\d{4})[-/]([A-Za-z]{3,4})[-/](\d{1,2})$/);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    let mon = ymdMatch[2].toUpperCase();
+    if (mon === 'SEP') mon = 'SEPT';
+    const day = ymdMatch[3].padStart(2, '0');
+    return `${day}-${mon}-${year}`;
+  }
+
+  // If in YYYY-MM-DD or YYYY/MM/DD (e.g. 2026-09-07 or 2026-9-7)
   const numMatch = trimmed.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
   if (numMatch) {
     const year = numMatch[1];
     const monthNum = parseInt(numMatch[2], 10);
     const day = numMatch[3].padStart(2, '0');
     if (monthNum >= 1 && monthNum <= 12) {
-      return `${year}-${MONTHS_SHORT[monthNum - 1]}-${day}`;
+      return `${day}-${MONTHS_SHORT[monthNum - 1]}-${year}`;
     }
   }
 
-  // Fallback to JS Date parsing for strings like "August 4, 2026" or "Sep 4, 2026"
+  // If in DD-MM-YYYY or DD/MM/YYYY
+  const numMatch2 = trimmed.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (numMatch2) {
+    const day = numMatch2[1].padStart(2, '0');
+    const monthNum = parseInt(numMatch2[2], 10);
+    const year = numMatch2[3];
+    if (monthNum >= 1 && monthNum <= 12) {
+      return `${day}-${MONTHS_SHORT[monthNum - 1]}-${year}`;
+    }
+  }
+
+  // Fallback to JS Date parsing for strings like "September 7, 2026" or "August 4, 2026"
   const parsed = new Date(trimmed);
   if (!Number.isNaN(parsed.getTime())) {
     const year = parsed.getFullYear();
     const mon = MONTHS_SHORT[parsed.getMonth()];
     const day = String(parsed.getDate()).padStart(2, '0');
-    return `${year}-${mon}-${day}`;
+    return `${day}-${mon}-${year}`;
   }
 
   return trimmed;
@@ -204,11 +226,25 @@ export function parseNewsletterDate(dateStr: string): number {
   if (!dateStr || typeof dateStr !== 'string') return 0;
   const trimmed = dateStr.trim();
 
+  // Match DD-MMM-YYYY (e.g. 07-SEPT-2026 or 07-SEP-2026)
+  const dmyMatch = trimmed.match(/^(\d{1,2})[-/]([A-Za-z]{3,4})[-/](\d{4})$/);
+  if (dmyMatch) {
+    const day = parseInt(dmyMatch[1], 10);
+    let monUpper = dmyMatch[2].toUpperCase();
+    if (monUpper === 'SEP') monUpper = 'SEPT';
+    const year = parseInt(dmyMatch[3], 10);
+    const monthIndex = MONTHS_SHORT.indexOf(monUpper as any);
+    if (monthIndex !== -1) {
+      return new Date(year, monthIndex, day).getTime();
+    }
+  }
+
   // Match YYYY-MMM-DD (e.g. 2026-SEP-04)
-  const mmmMatch = trimmed.match(/^(\d{4})-([A-Za-z]{3})-(\d{1,2})$/);
+  const mmmMatch = trimmed.match(/^(\d{4})-([A-Za-z]{3,4})-(\d{1,2})$/);
   if (mmmMatch) {
     const year = parseInt(mmmMatch[1], 10);
-    const monUpper = mmmMatch[2].toUpperCase();
+    let monUpper = mmmMatch[2].toUpperCase();
+    if (monUpper === 'SEP') monUpper = 'SEPT';
     const day = parseInt(mmmMatch[3], 10);
     const monthIndex = MONTHS_SHORT.indexOf(monUpper as any);
     if (monthIndex !== -1) {
@@ -288,11 +324,15 @@ export function getStoredNewsletters(): Newsletter[] {
     const parsed = JSON.parse(raw);
     const list: Newsletter[] = Array.isArray(parsed) ? parsed : NEWSLETTERS;
     const filtered = list.filter((item) => !LEGACY_MOCK_IDS.has(item.id));
-    const sanitized = filtered.map((item) => ({
-      ...item,
-      // Strip dead session-scoped blob URLs from legacy local storage
-      pdfUrl: item.pdfUrl?.startsWith('blob:') ? undefined : item.pdfUrl,
-    }));
+    const sanitized = filtered.map((item) => {
+      const isFirst = item.id === 'newsletter-01';
+      return {
+        ...item,
+        date: isFirst ? '07-SEPT-2026' : item.date,
+        // Strip dead session-scoped blob URLs from legacy local storage
+        pdfUrl: isFirst ? '/newsletters/No1_cryptoconfidant_Newsletter.pdf' : (item.pdfUrl?.startsWith('blob:') ? undefined : item.pdfUrl),
+      };
+    });
     return sortNewslettersLatestFirst(sanitized.length > 0 ? sanitized : NEWSLETTERS);
   } catch {
     return sortNewslettersLatestFirst(NEWSLETTERS);

@@ -46,11 +46,11 @@ export const NEWSLETTERS: Newsletter[] = [
   {
     id: 'newsletter-01',
     issueNumber: 'Newsletter 01',
-    date: 'August 4, 2026',
+    date: '07-SEPT-2026',
     title: 'Coldcard Seed-Generation Flaw Linked to Nearly $90M in Bitcoin Losses',
     category: 'Hardware Security',
     readTime: '6 min read',
-    pdfUrl: 'https://firebasestorage.googleapis.com/v0/b/crypto-confidant-2026.firebasestorage.app/o/newsletters%2FNo1_cryptoconfidant_Newsletter.pdf?alt=media&token=1a65c07e-5db4-46e5-b2a7-983a439a03ed',
+    pdfUrl: '/newsletters/No1_cryptoconfidant_Newsletter.pdf',
     pdfFileName: 'No1_cryptoconfidant_Newsletter.pdf',
     pdfFileSize: 'Official PDF Edition',
     introParagraphs: [
