@@ -27,7 +27,7 @@ export const StartHereSection: React.FC<StartHereSectionProps> = ({
         
         {/* Eyebrow */}
         <div className="flex items-center justify-center gap-3">
-          <span/>
+
           <span className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
             {eyebrow}
           </span>
@@ -60,22 +60,7 @@ export const StartHereSection: React.FC<StartHereSectionProps> = ({
           </button>
         </div>
 
-        {/* Disclaimer Text */}
-        <div className="pt-6 space-y-2">
-          <p className="text-xs sm:text-sm text-theme-muted/80 max-w-2xl mx-auto leading-relaxed font-normal">
-            {disclaimerText}
-          </p>
-          {onOpenTerms && (
-            <div>
-              <button
-                onClick={onOpenTerms}
-                className="text-xs font-mono text-theme-brass hover:underline underline-offset-4 cursor-pointer transition-colors"
-              >
-                Read Terms & Conditions and Privacy Policy →
-              </button>
-            </div>
-          )}
-        </div>
+
 
       </div>
     </section>

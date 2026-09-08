@@ -1305,11 +1305,6 @@ export const NewslettersPage: React.FC<
                       newsletter.id ===
                       activeNewsletter.id;
 
-                    const numMatch = newsletter.issueNumber.match(/\d+/);
-                    const numStr = numMatch
-                      ? numMatch[0].padStart(2, '0')
-                      : String(index + 1).padStart(2, '0');
-
                     const description =
                       newsletter.introParagraphs?.[0] ||
                       'Official published edition with security analysis and protection protocols.';
@@ -1351,34 +1346,29 @@ export const NewslettersPage: React.FC<
                         `}
                       >
 
-                        <span className="
-                          font-serif
-                          text-2xl
-                          sm:text-3xl
-                          text-theme-brass
-                          font-normal
+                        <div className="
                           shrink-0
-                          mt-0.5
-                          w-7
-                          sm:w-8
+                          w-[92px]
+                          sm:w-[108px]
+                          pt-0.5
                           select-none
                         ">
-                          {numStr}
-                        </span>
-
-                        <div className="space-y-1.5 flex-1 min-w-0">
-
-                          <div className="
+                          <span className="
+                            block
                             text-xs
                             sm:text-sm
                             font-semibold
                             text-theme-brass
                             tracking-wider
+                            leading-snug
                           ">
                             {formatNewsletterDate(
                               newsletter.date
                             )}
-                          </div>
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 flex-1 min-w-0">
 
                           <h3 className={`
                             font-sans
