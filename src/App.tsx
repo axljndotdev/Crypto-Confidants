@@ -332,6 +332,7 @@ export default function App() {
         onOpenNewsletters={handleOpenNewsletters}
         onOpenTerms={handleOpenTerms}
         onBackHome={currentPage !== 'home' ? handleBackHome : undefined}
+        content={siteContent.footer}
       />
 
       {/* Consultation Intake Modal */}

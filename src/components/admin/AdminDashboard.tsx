@@ -22,6 +22,7 @@ import {
 import { AdminUser, SiteContent } from '../../types';
 import { Newsletter } from '../../data/newsletters';
 import { 
+  defaultSiteContent,
   getStoredSiteContent, 
   saveStoredSiteContent, 
   getStoredNewsletters, 
@@ -1474,6 +1475,175 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
 
+              </div>
+            </div>
+
+            {/* SECTION 8: FOOTER */}
+            <div className="p-6 rounded-2xl bg-[#131210] border border-[#C4AC76]/20 space-y-4">
+              <div className="border-b border-[#C4AC76]/10 pb-3 flex items-center justify-between">
+                <h3 className="text-base font-serif text-[#C4AC76]">8. Footer & Legal Notice</h3>
+                <span className="text-[11px] font-mono text-[#8E8E8E]">Brand name, columns, email, links & disclaimers</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Brand Name</label>
+                  <input
+                    type="text"
+                    value={siteContent.footer?.brandName ?? defaultSiteContent.footer.brandName}
+                    onChange={(e) => setSiteContent({
+                      ...siteContent,
+                      footer: { ...(siteContent.footer || defaultSiteContent.footer), brandName: e.target.value }
+                    })}
+                    className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Contact Button Label (Links to Advisory Fees)</label>
+                  <input
+                    type="text"
+                    value={siteContent.footer?.contactButtonLabel ?? defaultSiteContent.footer.contactButtonLabel ?? 'Book a Conversation'}
+                    onChange={(e) => setSiteContent({
+                      ...siteContent,
+                      footer: { ...(siteContent.footer || defaultSiteContent.footer), contactButtonLabel: e.target.value }
+                    })}
+                    className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Contact Email</label>
+                  <input
+                    type="email"
+                    value={siteContent.footer?.contactEmail ?? defaultSiteContent.footer.contactEmail}
+                    onChange={(e) => setSiteContent({
+                      ...siteContent,
+                      footer: { ...(siteContent.footer || defaultSiteContent.footer), contactEmail: e.target.value }
+                    })}
+                    className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Navigation Column Title</label>
+                  <input
+                    type="text"
+                    value={siteContent.footer?.siteColumnTitle ?? defaultSiteContent.footer.siteColumnTitle}
+                    onChange={(e) => setSiteContent({
+                      ...siteContent,
+                      footer: { ...(siteContent.footer || defaultSiteContent.footer), siteColumnTitle: e.target.value }
+                    })}
+                    className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Contact Column Title</label>
+                  <input
+                    type="text"
+                    value={siteContent.footer?.contactColumnTitle ?? defaultSiteContent.footer.contactColumnTitle}
+                    onChange={(e) => setSiteContent({
+                      ...siteContent,
+                      footer: { ...(siteContent.footer || defaultSiteContent.footer), contactColumnTitle: e.target.value }
+                    })}
+                    className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Copyright & Legal Disclaimer Notice</label>
+                  <textarea
+                    rows={2}
+                    value={siteContent.footer?.copyrightText ?? defaultSiteContent.footer.copyrightText}
+                    onChange={(e) => setSiteContent({
+                      ...siteContent,
+                      footer: { ...(siteContent.footer || defaultSiteContent.footer), copyrightText: e.target.value }
+                    })}
+                    className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-mono text-[#8E8E8E] mb-1">Built-by / Credential Tagline</label>
+                  <input
+                    type="text"
+                    value={siteContent.footer?.builtByText ?? defaultSiteContent.footer.builtByText}
+                    onChange={(e) => setSiteContent({
+                      ...siteContent,
+                      footer: { ...(siteContent.footer || defaultSiteContent.footer), builtByText: e.target.value }
+                    })}
+                    className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-4 py-2 text-sm text-[#ECE6D6]"
+                  />
+                </div>
+
+                <div className="md:col-span-2 pt-3 border-t border-[#C4AC76]/10">
+                  <h4 className="text-xs font-mono text-[#C4AC76] uppercase tracking-wider mb-2">
+                    Navigation Link Labels (Optional Customization)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">"Why We Exist" Link</label>
+                      <input
+                        type="text"
+                        value={siteContent.footer?.whyWeExistLink ?? defaultSiteContent.footer.whyWeExistLink ?? ''}
+                        onChange={(e) => setSiteContent({
+                          ...siteContent,
+                          footer: { ...(siteContent.footer || defaultSiteContent.footer), whyWeExistLink: e.target.value }
+                        })}
+                        className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">"Who We Help" Link</label>
+                      <input
+                        type="text"
+                        value={siteContent.footer?.whoWeHelpLink ?? defaultSiteContent.footer.whoWeHelpLink ?? ''}
+                        onChange={(e) => setSiteContent({
+                          ...siteContent,
+                          footer: { ...(siteContent.footer || defaultSiteContent.footer), whoWeHelpLink: e.target.value }
+                        })}
+                        className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">"What We Offer" Link</label>
+                      <input
+                        type="text"
+                        value={siteContent.footer?.whatWeOfferLink ?? defaultSiteContent.footer.whatWeOfferLink ?? ''}
+                        onChange={(e) => setSiteContent({
+                          ...siteContent,
+                          footer: { ...(siteContent.footer || defaultSiteContent.footer), whatWeOfferLink: e.target.value }
+                        })}
+                        className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">"Advisory Fees" Link</label>
+                      <input
+                        type="text"
+                        value={siteContent.footer?.pricingLink ?? defaultSiteContent.footer.pricingLink ?? ''}
+                        onChange={(e) => setSiteContent({
+                          ...siteContent,
+                          footer: { ...(siteContent.footer || defaultSiteContent.footer), pricingLink: e.target.value }
+                        })}
+                        className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#8E8E8E] mb-1">"Terms & Privacy" Link</label>
+                      <input
+                        type="text"
+                        value={siteContent.footer?.termsLink ?? defaultSiteContent.footer.termsLink ?? ''}
+                        onChange={(e) => setSiteContent({
+                          ...siteContent,
+                          footer: { ...(siteContent.footer || defaultSiteContent.footer), termsLink: e.target.value }
+                        })}
+                        className="w-full bg-[#1D1B17] border border-[#C4AC76]/20 rounded-xl px-3 py-1.5 text-xs text-[#ECE6D6]"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

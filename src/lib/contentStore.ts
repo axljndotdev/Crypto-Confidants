@@ -110,6 +110,20 @@ export const defaultSiteContent: SiteContent = {
     tier3Feature: 'Valid for 180 days from date of purchase.',
     tier3ButtonLabel: 'Introductory Session Required First',
   },
+  footer: {
+    brandName: 'Crypto Confidant',
+    siteColumnTitle: 'SITE',
+    contactColumnTitle: 'CONTACT',
+    contactEmail: 'hello@cryptoconfidant.com',
+    contactButtonLabel: 'Book a Conversation',
+    copyrightText: '© 2026 Crypto Confidant. Educational content and confidential conversations only — not legal, tax, or financial advice.',
+    builtByText: "Built by people who've been through it.",
+    whyWeExistLink: 'Why We Exist',
+    whoWeHelpLink: 'Who We Help',
+    whatWeOfferLink: 'What We Offer',
+    pricingLink: 'Advisory Fees',
+    termsLink: 'Terms & Privacy Policy',
+  },
 };
 
 export const defaultAdminUsers: (AdminUser & { password?: string })[] = [
@@ -247,6 +261,7 @@ export function getStoredSiteContent(): SiteContent {
       comms: { ...defaultSiteContent.comms, ...(parsed.comms || {}) },
       startHere: { ...defaultSiteContent.startHere, ...(parsed.startHere || {}) },
       pricing: { ...defaultSiteContent.pricing, ...(parsed.pricing || {}) },
+      footer: { ...defaultSiteContent.footer, ...(parsed.footer || {}) },
     };
   } catch {
     return defaultSiteContent;

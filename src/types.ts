@@ -143,6 +143,9 @@ export interface SiteContent {
   pricing: {
     headline: string;
     subheadline: string;
+    headerEyebrow?: string;
+    headerTitle?: string;
+    headerSubtitle?: string;
     tier1TopLabel: string;
     tier1Name: string;
     tier1Price: string;
@@ -159,5 +162,19 @@ export interface SiteContent {
     tier3Description: string;
     tier3Feature: string;
     tier3ButtonLabel: string;
+  };
+  footer: {
+    brandName: string;
+    siteColumnTitle: string;
+    contactColumnTitle: string;
+    contactEmail: string;
+    contactButtonLabel?: string;
+    copyrightText: string;
+    builtByText: string;
+    whyWeExistLink?: string;
+    whoWeHelpLink?: string;
+    whatWeOfferLink?: string;
+    pricingLink?: string;
+    termsLink?: string;
   };
 }
