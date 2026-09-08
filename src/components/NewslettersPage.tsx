@@ -467,36 +467,26 @@ export const NewslettersPage: React.FC<
       error?.message || error
     );
 
-    // If PDF.js failed to render (e.g. network/fetch error on an external file),
-    // automatically attempt the high-fidelity dynamic fallback PDF so the reader is uninterrupted.
-    if (activeNewsletter && pdfSourceKind !== 'local') {
-      try {
-        console.info('Attempting dynamic PDF generation fallback for rendering...');
-        const fallbackBlob = await generateNewsletterPdf(activeNewsletter);
-        const fallbackBlobUrl = URL.createObjectURL(fallbackBlob);
-        if (localPdfUrlRef.current) {
-          URL.revokeObjectURL(localPdfUrlRef.current);
-        }
-        localPdfUrlRef.current = fallbackBlobUrl;
-        setActivePdfUrl(fallbackBlobUrl);
-        setPdfSourceKind('local');
-        setPdfLoading(true);
-        setPdfLoadError(false);
-        setPdfViewerFallback(false);
-        setPdfErrorMessage(null);
-        return;
-      } catch (genErr) {
-        console.warn('Dynamic fallback generation error:', genErr);
-      }
-    }
-
     setPdfLoading(false);
     setPdfLoadError(true);
-    setPdfViewerFallback(true);
+    setPdfViewerFallback(false);
     setPdfErrorMessage(
       error?.message ||
-        'The official PDF could not be rendered in the embedded viewer. Use Open PDF to view the original file.'
+        'Preview is currently unavailable for this newsletter. Please click Open to view the official PDF in a new tab.'
     );
+
+    if (activePdfUrl) {
+      window.setTimeout(() => {
+        try {
+          const opened = window.open(activePdfUrl, '_blank', 'noopener,noreferrer');
+          if (!opened) {
+            console.warn('Popup blocked while opening newsletter PDF.');
+          }
+        } catch (openErr) {
+          console.warn('Failed to auto-open newsletter PDF:', openErr);
+        }
+      }, 250);
+    }
   };
 
   /*
@@ -862,12 +852,32 @@ export const NewslettersPage: React.FC<
   const handleSelectNewsletter = (
     newsletterId: string
   ) => {
+    const selectedNewsletter = sortedNewsletters.find(
+      (newsletter) => newsletter.id === newsletterId
+    );
 
     setSelectedNewsletterId(
       newsletterId
     );
 
     setMobileArchiveOpen(false);
+
+    if (selectedNewsletter?.pdfUrl) {
+      window.setTimeout(() => {
+        try {
+          const opened = window.open(
+            selectedNewsletter.pdfUrl,
+            '_blank',
+            'noopener,noreferrer'
+          );
+          if (!opened) {
+            console.warn('Newsletter PDF popup was blocked.');
+          }
+        } catch (openErr) {
+          console.warn('Failed to auto-open newsletter PDF:', openErr);
+        }
+      }, 150);
+    }
 
     window.scrollTo({
       top: 0,
@@ -2051,7 +2061,7 @@ export const NewslettersPage: React.FC<
                             font-semibold
                             text-[#F4F0E8]
                           ">
-                            PDF preview unavailable
+                            Preview is currently unavailable
                           </h3>
 
 
@@ -2061,10 +2071,7 @@ export const NewslettersPage: React.FC<
                             leading-relaxed
                             text-[#B7B1A7]
                           ">
-                            The official edition
-                            is available, but the
-                            document could not be
-                            rendered in the viewer.
+                            Please click Open to view the official PDF in a new tab.
                           </p>
 
 
