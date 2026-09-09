@@ -13,6 +13,7 @@ import {
   sortNewslettersLatestFirst,
   syncNewslettersWithFirebaseStorage,
   saveSingleNewsletter,
+  clearStoredNewslettersCache,
 } from '../lib/contentStore';
 
 import {
@@ -20,7 +21,6 @@ import {
   downloadNewsletterPdfFile,
   savePdfToIndexedDb,
   formatFileSize,
-  generateNewsletterPdf,
 } from '../lib/pdfStorage';
 
 import { uploadPdfToFirebaseStorage } from '../lib/firebase';
@@ -544,6 +544,19 @@ export const NewslettersPage: React.FC<
       '_blank',
       'noopener,noreferrer'
     );
+  };
+
+  const handleClearNewsletterCache = async () => {
+    clearStoredNewslettersCache();
+    setAllNewsletters([]);
+
+    try {
+      const synced = await syncNewslettersWithFirebaseStorage();
+      setAllNewsletters(synced || getStoredNewsletters());
+    } catch (err) {
+      console.warn('Failed to refresh newsletters from Firebase Storage:', err);
+      setAllNewsletters(getStoredNewsletters());
+    }
   };
 
   /*
@@ -1203,20 +1216,29 @@ export const NewslettersPage: React.FC<
 
               </h2>
 
-              <span className="
-                shrink-0
-                text-xs
-                font-medium
-                px-2.5
-                py-1.5
-                rounded
-                bg-theme-surface-hover
-                text-theme-brass
-                border
-                border-theme
-              ">
-                Archive
-              </span>
+              <button
+                type="button"
+                onClick={handleClearNewsletterCache}
+                className="
+                  shrink-0
+                  inline-flex
+                  items-center
+                  gap-2
+                  text-xs
+                  font-medium
+                  px-2.5
+                  py-1.5
+                  rounded
+                  bg-theme-surface-hover
+                  text-theme-brass
+                  border
+                  border-theme
+                  hover:border-[#d4af6a]
+                "
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Refresh
+              </button>
 
             </div>
 

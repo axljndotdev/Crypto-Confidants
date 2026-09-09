@@ -227,6 +227,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleDeleteNewsletter = async (id: string) => {
     if (!window.confirm('Delete this newsletter issue?')) return;
+    try {
+      await deletePdfFromIndexedDb(id);
+    } catch (err) {
+      console.warn('Could not clear local newsletter cache:', err);
+    }
     await deleteNewsletterFromFirestore(id);
     const refreshed = getStoredNewsletters();
     setNewsletters(refreshed);
@@ -234,7 +239,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setEditingIssue(null);
       setIsCreatingNew(false);
     }
-    flashMessage('Newsletter removed from cloud database.');
+    flashMessage('Newsletter removed from storage, Firestore, and local cache.');
   };
 
   const handleStartNewNewsletter = () => {

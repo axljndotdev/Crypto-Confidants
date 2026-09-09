@@ -1,6 +1,6 @@
 import { SiteContent, AdminUser } from '../types';
 import { NEWSLETTERS, Newsletter } from '../data/newsletters';
-import { db, listNewslettersFromFirebaseStorage } from './firebase';
+import { db, listNewslettersFromFirebaseStorage, deletePdfFromFirebaseStorage } from './firebase';
 import { formatFileSize } from './pdfStorage';
 import { 
   doc, 
@@ -314,6 +314,12 @@ const LEGACY_MOCK_IDS = new Set([
   'newsletter-08',
 ]);
 
+export function clearStoredNewslettersCache(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(NEWSLETTERS_KEY);
+  window.dispatchEvent(new Event('newsletters-updated'));
+}
+
 export function getStoredNewsletters(): Newsletter[] {
   if (typeof window === 'undefined') return sortNewslettersLatestFirst(NEWSLETTERS);
   try {
@@ -456,12 +462,39 @@ export async function saveStoredNewsletters(newsletters: Newsletter[]): Promise<
 
 export async function deleteNewsletterFromFirestore(id: string): Promise<void> {
   const current = getStoredNewsletters();
+  const newsletterToDelete = current.find((n) => n.id === id);
   const updated = current.filter((n) => n.id !== id);
   const sorted = sortNewslettersLatestFirst(updated);
 
   if (typeof window !== 'undefined') {
     localStorage.setItem(NEWSLETTERS_KEY, JSON.stringify(sorted));
     window.dispatchEvent(new Event('newsletters-updated'));
+  }
+
+  try {
+    const storageFiles = await listNewslettersFromFirebaseStorage();
+    const matchingStorageFile = storageFiles.find((file) => {
+      const matchesId = file.newsletterId === id || file.name.startsWith(`${id}_`) || file.name.startsWith(`${id}.`);
+      const matchesUrl = newsletterToDelete?.pdfUrl && file.downloadUrl === newsletterToDelete.pdfUrl;
+      const matchesPath = newsletterToDelete?.pdfUrl && file.fullPath && newsletterToDelete.pdfUrl.includes(file.fullPath);
+      return matchesId || matchesUrl || matchesPath;
+    });
+
+    if (matchingStorageFile?.fullPath) {
+      try {
+        await deletePdfFromFirebaseStorage(matchingStorageFile.gsUrl || matchingStorageFile.fullPath);
+      } catch (storageErr) {
+        console.warn('Could not delete newsletter PDF from Firebase Storage:', storageErr);
+      }
+    } else if (newsletterToDelete?.pdfUrl) {
+      try {
+        await deletePdfFromFirebaseStorage(newsletterToDelete.pdfUrl);
+      } catch (storageErr) {
+        console.warn('Could not delete matched PDF URL from Firebase Storage:', storageErr);
+      }
+    }
+  } catch (err) {
+    console.warn('Could not inspect Firebase Storage for newsletter cleanup:', err);
   }
 
   try {
