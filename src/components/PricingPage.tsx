@@ -65,7 +65,9 @@ If you are ready to get started, choose the introductory session below.`;
       description:
         content?.tier1Description ||
         'A focused introductory conversation to clarify your situation, explore relevant options, and determine whether further advisory work would be helpful.',
-      features: [],
+      features: content?.tier1Feature
+        ? [content.tier1Feature]
+        : ['Payments are securely processed by JSEK Marketing LLC.'],
       buttonLabel: content?.tier1ButtonLabel || 'Book & Pay',
       accent: true,
     },
@@ -393,7 +395,7 @@ If you are ready to get started, choose the introductory session below.`;
 
                   <Cal
                     key={calInstanceKey}
-                    calLink="crypto-confidant/introductory-session"
+                    calLink="https://cal.com/jsek-marketing-llc/introductory-session"
                     style={{
                       width: '100%',
                       height: '700px',

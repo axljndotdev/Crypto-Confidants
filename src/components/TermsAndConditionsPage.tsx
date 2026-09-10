@@ -33,6 +33,7 @@ export const TermsAndConditionsPage: React.FC<TermsAndConditionsPageProps> = ({
     { id: 'section-2', title: '2. Confidentiality and Privacy' },
     { id: 'section-3', title: '3. Multiple Session Packages & Expiration Policy' },
     { id: 'section-4', title: '4. Limitation of Liability' },
+    { id: 'section-5', title: '5. Payment Processing & Billing' },
   ];
 
   return (
@@ -49,6 +50,14 @@ export const TermsAndConditionsPage: React.FC<TermsAndConditionsPageProps> = ({
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             <span>Return to Home</span>
           </button>
+        </div>
+        {/* Payment Processing Disclosure (Section 5) */}
+        <div id="section-5" className="mb-8 p-4 rounded-lg bg-theme-main border border-theme-subtle text-sm text-theme-muted">
+          <strong className="block text-xs font-mono font-semibold uppercase text-theme-muted mb-1">Payment Processing</strong>
+          <p>
+            Payments for advisory services are processed on behalf of Crypto Confidant by JSEK Marketing LLC. By completing a payment you acknowledge that payment processing is handled by JSEK Marketing LLC. For more information about their services and privacy practices, visit{' '}
+            <a href="https://jsekmarketing.com" target="_blank" rel="noopener noreferrer" className="underline text-theme-brass">JSEK Marketing LLC</a>.
+          </p>
         </div>
 
         {/* Header */}

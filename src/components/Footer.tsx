@@ -17,6 +17,7 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({
   onOpenPricing,
   onOpenTerms,
+  onOpenConsultation,
   onBackHome,
   content,
 }) => {
@@ -54,27 +55,24 @@ export const Footer: React.FC<FooterProps> = ({
     <footer className="bg-theme-main1 transition-colors duration-300 border-t border-theme py-16 sm:py-20 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16">
         
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
-          
-          {/* Brand Logo & Name */}
-          <div className="md:col-span-5 flex items-center gap-3">
-            <BrandMark size={32} variant="brass" src={logoMain} alt={brandName} />
-            <span className="font-serif text-2xl sm:text-3xl font-normal text-theme-main underline decoration-theme-brass/50 underline-offset-4 decoration-1">
+        {/* Main Grid — simplified */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+          <div className="md:col-span-4 flex items-center gap-3">
+            <BrandMark size={28} variant="brass" src={logoMain} alt={brandName} />
+            <span className="font-serif text-xl sm:text-2xl font-normal text-theme-main">
               {brandName}
             </span>
           </div>
 
-          {/* SITE Links */}
-          <div className="md:col-span-3 space-y-4">
-            <h4 className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
+          <div className="md:col-span-4">
+            <h4 className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass mb-2">
               {siteColumnTitle}
             </h4>
-            <ul className="space-y-3 text-sm sm:text-base text-theme-muted font-normal">
+            <ul className="flex flex-col items-start gap-2 text-sm text-theme-muted">
               <li>
                 <button
                   onClick={() => scrollToSection('why-we-exist')}
-                  className="hover:text-theme-main transition-colors text-left cursor-pointer"
+                  className="hover:text-theme-main transition-colors"
                 >
                   {whyWeExistLink}
                 </button>
@@ -82,7 +80,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   onClick={() => scrollToSection('who-we-help')}
-                  className="hover:text-theme-main transition-colors text-left cursor-pointer"
+                  className="hover:text-theme-main transition-colors"
                 >
                   {whoWeHelpLink}
                 </button>
@@ -90,7 +88,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   onClick={() => scrollToSection('what-we-offer')}
-                  className="hover:text-theme-main transition-colors text-left cursor-pointer"
+                  className="hover:text-theme-main transition-colors"
                 >
                   {whatWeOfferLink}
                 </button>
@@ -99,7 +97,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <li>
                   <button
                     onClick={onOpenPricing}
-                    className="hover:text-theme-main transition-colors text-left cursor-pointer"
+                    className="hover:text-theme-main transition-colors"
                   >
                     {pricingLink}
                   </button>
@@ -109,60 +107,46 @@ export const Footer: React.FC<FooterProps> = ({
                 <li>
                   <button
                     onClick={onOpenTerms}
-                    className="hover:text-theme-brass transition-colors text-left cursor-pointer"
+                    className="hover:text-theme-main transition-colors"
                   >
                     {termsLink}
                   </button>
                 </li>
               )}
             </ul>
+          
           </div>
-
-          {/* CONTACT */}
-          <div className="md:col-span-4 space-y-4">
-            <h4 className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass">
+          <div className="md:col-span-4">
+            <h4 className="text-xs sm:text-sm font-sans font-semibold uppercase tracking-[0.2em] text-theme-brass mb-2 text-right md:text-right">
               {contactColumnTitle}
             </h4>
-            <div>
-              {onOpenPricing ? (
-                <button
-                  id="footer-book-conversation-btn"
-                  type="button"
-                  onClick={onOpenPricing}
-                  className="text-sm sm:text-base font-medium text-white hover:underline cursor-pointer transition-colors text-left"
-                >
-                  {contactButtonLabel}
-                </button>
-              ) : (
-                <a
-                  id="footer-book-conversation-btn"
-                  href="#pricing"
-                  className="text-sm sm:text-base font-medium text-white hover:underline cursor-pointer transition-colors text-left inline-block"
-                >
-                  {contactButtonLabel}
-                </a>
-              )}
+            <div className="flex flex-col items-end gap-2">
+             
+
+              <button
+                onClick={() => {
+                  if (onOpenConsultation) {
+                    onOpenConsultation();
+                  } else {
+                    window.location.href = `mailto:${contactEmail}`;
+                  }
+                }}
+                className="inline-flex items-center text-xs sm:text-sm font-medium text-theme-accent hover:underline gap-1"
+              >
+                {contactButtonLabel}
+              </button>
             </div>
           </div>
-
         </div>
+        
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-theme-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs sm:text-sm text-theme-muted font-normal">
-          <p>
-            {copyrightText}
-          </p>
-          <div className="flex flex-wrap items-center gap-4 shrink-0">
-            {onOpenTerms && (
-              <button
-                onClick={onOpenTerms}
-                className="hover:text-theme-brass underline decoration-theme-brass/40 underline-offset-4 transition-colors cursor-pointer text-theme-muted"
-              >
-                {termsLink}
-              </button>
-            )}
-            <p className="shrink-0">
-              {builtByText}
+        {/* Bottom Bar — minimal */}
+        <div className="pt-6 border-t border-theme-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-2 text-xs sm:text-sm text-theme-muted">
+          <p>{copyrightText}</p>
+          <div className="flex items-center gap-4">
+            <p className="shrink-0">{builtByText}</p>
+            <p className="shrink-0 text-xs text-theme-muted">Payments processed by{' '}
+              <a href="https://jsekmarketing.com" target="_blank" rel="noopener noreferrer" className="underline text-theme-brass">JSEK Marketing LLC</a>
             </p>
           </div>
         </div>

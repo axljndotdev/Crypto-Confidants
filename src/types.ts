@@ -151,6 +151,8 @@ export interface SiteContent {
     tier1Price: string;
     tier1Description: string;
     tier1ButtonLabel: string;
+    tier1Feature?: string;
+    tier2Feature?: string;
     tier2TopLabel: string;
     tier2Name: string;
     tier2Price: string;

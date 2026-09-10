@@ -97,6 +97,7 @@ export const defaultSiteContent: SiteContent = {
     tier1Name: 'Introductory Session',
     tier1Price: 'US$75',
     tier1Description: 'A focused introductory conversation to clarify your situation, explore relevant options, and determine whether further advisory work would be helpful.',
+    tier1Feature: 'Payments are securely processed by JSEK Marketing LLC.',
     tier1ButtonLabel: 'Book & Pay',
     tier2TopLabel: '50 MINUTES',
     tier2Name: 'Single Session',
