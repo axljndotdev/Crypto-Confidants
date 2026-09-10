@@ -247,13 +247,6 @@ export const TermsAndConditionsPage: React.FC<TermsAndConditionsPageProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <a
-              href="mailto:hello@cryptoconfidant.com"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium bg-theme-main border border-theme text-theme-main hover:text-theme-brass transition-colors"
-            >
-              <Mail className="w-3.5 h-3.5 text-theme-brass" />
-              <span>hello@cryptoconfidant.com</span>
-            </a>
 
             {onOpenPricing && (
               <button
