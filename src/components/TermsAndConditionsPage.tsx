@@ -51,14 +51,7 @@ export const TermsAndConditionsPage: React.FC<TermsAndConditionsPageProps> = ({
             <span>Return to Home</span>
           </button>
         </div>
-        {/* Payment Processing Disclosure (Section 5) */}
-        <div id="section-5" className="mb-8 p-4 rounded-lg bg-theme-main border border-theme-subtle text-sm text-theme-muted">
-          <strong className="block text-xs font-mono font-semibold uppercase text-theme-muted mb-1">Payment Processing</strong>
-          <p>
-            Payments for advisory services are processed on behalf of Crypto Confidant by JSEK Marketing LLC. By completing a payment you acknowledge that payment processing is handled by JSEK Marketing LLC. For more information about their services and privacy practices, visit{' '}
-            <a href="https://jsekmarketing.com" target="_blank" rel="noopener noreferrer" className="underline text-theme-brass">JSEK Marketing LLC</a>.
-          </p>
-        </div>
+        {/* (Payment Processing moved into section-5 below to match Index styling) */}
 
         {/* Header */}
         <header className="space-y-4 mb-12">
@@ -219,6 +212,21 @@ export const TermsAndConditionsPage: React.FC<TermsAndConditionsPageProps> = ({
 
             <p className="text-base sm:text-lg leading-relaxed text-theme-muted">
               The Company, its founders, and representatives shall not be liable for any financial losses, legal outcomes, or damages arising from decisions made or actions taken based on educational discussions or information provided during any session.
+            </p>
+          </article>
+
+          {/* 5. Payment Processing & Billing */}
+          <article
+            id="section-5"
+            className="p-7 sm:p-9 rounded-2xl bg-theme-surface border border-theme scroll-mt-28 space-y-6"
+          >
+            <h2 className="font-serif text-2xl sm:text-3xl text-theme-main font-normal tracking-tight">
+              5. Payment Processing & Billing
+            </h2>
+
+            <p className="text-base sm:text-lg leading-relaxed text-theme-main font-normal">
+              Payments for advisory services are processed on behalf of Crypto Confidant by JSEK Marketing LLC. By completing a payment you acknowledge that payment processing is handled by JSEK Marketing LLC. For more information about their services and privacy practices, visit{' '}
+              <a href="https://jsekmarketing.com" target="_blank" rel="noopener noreferrer" className="underline text-theme-brass">JSEK Marketing LLC</a>.
             </p>
           </article>
 
