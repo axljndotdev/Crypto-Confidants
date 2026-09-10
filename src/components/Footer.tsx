@@ -124,17 +124,12 @@ export const Footer: React.FC<FooterProps> = ({
              
 
               <button
-                onClick={() => {
-                  if (onOpenConsultation) {
-                    onOpenConsultation();
-                  } else {
-                    window.location.href = `mailto:${contactEmail}`;
-                  }
-                }}
-                className="inline-flex items-center text-xs sm:text-sm font-medium text-theme-accent hover:underline gap-1"
-              >
-                {contactButtonLabel}
-              </button>
+            onClick={onOpenPricing}
+            className="inline-flex items-center text-xs sm:text-sm font-medium text-theme-accent hover:underline gap-1"
+          >
+            <span>Book a Conversation</span>
+          </button>
+
             </div>
           </div>
         </div>
